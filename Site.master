@@ -1,0 +1,220 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeFile="Site.master.cs" Inherits="Site" %>
+<!DOCTYPE html>
+<html >
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OXIVE - <asp:ContentPlaceHolder ID="PageTitle" runat="server">Source Master</asp:ContentPlaceHolder></title>
+    <link href="Content/Site.css" rel="stylesheet" type="text/css" />
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</head>
+<body>
+    <form id="masterForm" runat="server">
+        <!-- Notification Toast -->
+        <div id="notification" class="notification"></div>
+
+        <!-- ===== TOP NAVBAR ===== -->
+        <div class="top-navbar">
+            <div class="navbar-left">
+                <span class="navbar-hamburger" onclick="toggleSidebar()" title="Toggle Menu">&#9776;</span>
+                <span class="navbar-brand">OXIVE</span>
+                <span class="navbar-finyear">Fin Year 01-Jan-2026 To 31-Dec-2026</span>
+            </div>
+            <div class="navbar-center">
+                <asp:ContentPlaceHolder ID="NavTitle" runat="server">Source Master</asp:ContentPlaceHolder>
+            </div>
+            <div class="navbar-right">
+                <span class="navbar-study">STUDY</span>
+                <div class="navbar-avatar" title="User Profile">&#128100;</div>
+            </div>
+        </div>
+
+        <!-- ===== LAYOUT ===== -->
+        <div class="layout-wrapper">
+
+            <!-- ===== SIDEBAR ===== -->
+            <div class="sidebar" id="mainSidebar">
+                <div class="sidebar-search">
+                    <input type="text" id="menuSearch" placeholder="Search..." onkeyup="filterMenu(this.value)" />
+                </div>
+
+                <!-- DASH BOARD -->
+                <div class="menu-section">
+                    <div class="menu-section-header" onclick="toggleSection(this)">
+                        <span><span class="icon">&#128202;</span> DASH BOARD</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="menu-section-body">
+                        <ul class="menu-items">
+                            <li><a href="../Default.aspx" class="menu-link">&#127968; Home</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- RAW MATERIAL -->
+                <div class="menu-section">
+                    <div class="menu-section-header open" onclick="toggleSection(this)">
+                        <span><span class="icon">&#128230;</span> RAW MATERIAL</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="menu-section-body open">
+
+                        <!-- Masters Group -->
+                        <div class="menu-group-header open" onclick="toggleGroup(this)">
+                            <span>&#9660; Masters</span>
+                            <span class="arrow">&#9660;</span>
+                        </div>
+                        <div class="menu-section-body open">
+                            <ul class="menu-items">
+                                <li><a href="Masters/UOMMaster.aspx" class="menu-link">UOM Master</a></li>
+                                <li><a href="Masters/GroupMaster.aspx" class="menu-link">Group Master</a></li>
+                                <li><a href="Masters/SubGroupMaster.aspx" class="menu-link">Sub Group</a></li>
+                                <li><a href="Masters/SourceMaster.aspx" class="menu-link">Source Master</a></li>
+                                <li><a href="Masters/WeightBridgePartyMaster.aspx" class="menu-link">WeightBridgePartyMaster</a></li>
+                                <li><a href="GPEMaterialPlantMapping.aspx" class="menu-link">GPE Material Plant Mapping</a></li>
+                                <li><a href="TermsConditionMasterRM.aspx" class="menu-link">Terms &amp; Condition Master RM</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Tasks Group -->
+                        <div class="menu-group-header" onclick="toggleGroup(this)">
+                            <span>&#9658; Tasks</span>
+                            <span class="arrow">&#9660;</span>
+                        </div>
+                        <div class="menu-section-body">
+                            <ul class="menu-items">
+                                <li><a href="#" class="menu-link">Purchase Orders</a></li>
+                                <li><a href="#" class="menu-link">GRN Entry</a></li>
+                                <li><a href="#" class="menu-link">Material Issue</a></li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PRODUCTION -->
+                <div class="menu-section">
+                    <div class="menu-section-header" onclick="toggleSection(this)">
+                        <span><span class="icon">&#9881;</span> PRODUCTION</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="menu-section-body">
+                        <ul class="menu-items">
+                            <li><a href="#" class="menu-link">Batching</a></li>
+                            <li><a href="#" class="menu-link">Ready Mix</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- ACCOUNTS -->
+                <div class="menu-section">
+                    <div class="menu-section-header" onclick="toggleSection(this)">
+                        <span><span class="icon">&#128200;</span> ACCOUNTS</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="menu-section-body">
+                        <ul class="menu-items">
+                            <li><a href="#" class="menu-link">Ledger</a></li>
+                            <li><a href="#" class="menu-link">Voucher Entry</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ===== END SIDEBAR ===== -->
+
+            <!-- ===== MAIN CONTENT ===== -->
+            <div class="main-content" id="mainContent">
+                <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+            </div>
+            <!-- ===== END MAIN CONTENT ===== -->
+
+        </div>
+        <!-- ===== END LAYOUT ===== -->
+    </form>
+
+    <script type="text/javascript">
+        // Toggle sidebar visibility
+        function toggleSidebar() {
+            var sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        // Toggle menu section open/close
+        function toggleSection(header) {
+            header.classList.toggle('open');
+            var body = header.nextElementSibling;
+            if (body) {
+                body.classList.toggle('open');
+            }
+        }
+
+        // Toggle group open/close
+        function toggleGroup(header) {
+            var body = header.nextElementSibling;
+            if (body) {
+                body.classList.toggle('open');
+            }
+            // Toggle arrow text
+            var span = header.querySelector('span');
+            if (span) {
+                var txt = span.textContent;
+                if (txt.startsWith('\u25BC')) {
+                    span.textContent = '\u25BA' + txt.substring(1);
+                } else if (txt.startsWith('\u25BA')) {
+                    span.textContent = '\u25BC' + txt.substring(1);
+                }
+            }
+        }
+
+        // Set active menu item based on current page
+        function setActiveMenu() {
+            var links = document.querySelectorAll('.menu-link');
+            var currentPage = window.location.pathname.split('/').pop().toLowerCase();
+            links.forEach(function (link) {
+                var href = link.getAttribute('href');
+                if (href && href.toLowerCase() === currentPage) {
+                    link.classList.add('active');
+                    // Ensure parent sections are open
+                    var parent = link.closest('.menu-section-body');
+                    while (parent) {
+                        parent.classList.add('open');
+                        var header = parent.previousElementSibling;
+                        if (header) header.classList.add('open');
+                        parent = parent.parentElement ? parent.parentElement.closest('.menu-section-body') : null;
+                    }
+                }
+            });
+        }
+
+        // Filter menu items by search
+        function filterMenu(val) {
+            val = val.toLowerCase().trim();
+            var items = document.querySelectorAll('.menu-items li');
+            items.forEach(function (li) {
+                var text = li.textContent.toLowerCase();
+                li.style.display = (!val || text.indexOf(val) >= 0) ? '' : 'none';
+            });
+            if (val) {
+                // Open all sections when searching
+                document.querySelectorAll('.menu-section-body').forEach(function (b) { b.classList.add('open'); });
+            }
+        }
+
+        // Show notification toast
+        function showNotification(message, type) {
+            var n = document.getElementById('notification');
+            n.textContent = message;
+            n.className = 'notification ' + (type || 'success');
+            n.style.display = 'block';
+            setTimeout(function () { n.style.display = 'none'; }, 3000);
+        }
+
+        window.onload = function () {
+            setActiveMenu();
+        };
+    </script>
+
+    <asp:ContentPlaceHolder ID="ScriptContent" runat="server" />
+</body>
+</html>
