@@ -18,50 +18,59 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsPostBack)
+        try
         {
-            hfView.Value = "list";
-            BindGridData();
-        }
-        else
-        {
-            // Restore view after postback
-            string ev = Request.Form["__EVENTTARGET"] ?? "";
-            string ea = Request.Form["__EVENTARGUMENT"] ?? "";
-
-            if (ea.StartsWith("open:"))
+            if (!IsPostBack)
             {
-                string code = ea.Replace("open:", "");
-                int vendorCode;
-                if (int.TryParse(code, out vendorCode))
-                {
-                    hfView.Value = "form";
-                    LoadVendor(vendorCode);
-                    BindSubTabs(vendorCode);
-                    ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                        "currentView='form'; applyView(); restoreTab();", true);
-                }
+                hfView.Value = "list";
+                BindGridData();
             }
             else
             {
-                // Re-bind grid data on every postback so JS can re-render
-                BindGridData();
-                if (hfView.Value == "form")
+                string ev = Request.Form["__EVENTTARGET"] ?? "";
+                string ea = Request.Form["__EVENTARGUMENT"] ?? "";
+
+                if (ea.StartsWith("open:"))
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                        "currentView='form'; applyView(); restoreTab();", true);
+                    string code = ea.Replace("open:", "");
+                    int vendorCode;
+                    if (int.TryParse(code, out vendorCode))
+                    {
+                        hfView.Value = "form";
+                        LoadVendor(vendorCode);
+                        BindSubTabs(vendorCode);
+                        ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                            "applyView(); restoreTab();", true);
+                    }
+                    else
+                    {
+                        ShowMsg("Invalid vendor code in URL argument.", "error");
+                    }
                 }
                 else
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                        "currentView='list'; applyView(); renderGrid();", true);
+                    BindGridData();
+                    if (hfView.Value == "form")
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                            "applyView(); restoreTab();", true);
+                    }
+                    else
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                            "applyView(); renderGrid();", true);
+                    }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Page load error: " + ex.Message, "error");
         }
     }
 
     // =============================================
-    // GRID DATA — serialized as JSON for JS rendering
+    // GRID DATA
     // =============================================
     private void BindGridData()
     {
@@ -100,10 +109,15 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 hfGridData.Value = JsonConvert.SerializeObject(dt);
             }
         }
+        catch (SqlException ex)
+        {
+            hfGridData.Value = "[]";
+            ShowMsg("Database error loading grid: " + ex.Message, "error");
+        }
         catch (Exception ex)
         {
             hfGridData.Value = "[]";
-            ShowMsg(ex.Message, "error");
+            ShowMsg("Error loading vendor list: " + ex.Message, "error");
         }
     }
 
@@ -112,12 +126,19 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnAddNew_Click(object sender, EventArgs e)
     {
-        ClearForm();
-        hfView.Value = "form";
-        hfVendorCode.Value = "0";
-        LoadChecklistTemplate(0);
-        ScriptManager.RegisterStartupScript(this, GetType(), "view",
-            "currentView='form'; applyView(); switchTab('tab-details');", true);
+        try
+        {
+            ClearForm();
+            hfView.Value = "form";
+            hfVendorCode.Value = "0";
+            LoadChecklistTemplate(0);
+            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                "applyView(); switchTab('tab-details');", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error opening new vendor form: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -125,17 +146,24 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnBackToList_Click(object sender, EventArgs e)
     {
-        string ea = Request.Form["__EVENTARGUMENT"] ?? "";
-        if (ea.StartsWith("open:"))
+        try
         {
-            // handled in Page_Load
-            return;
+            string ea = Request.Form["__EVENTARGUMENT"] ?? "";
+            if (ea.StartsWith("open:"))
+            {
+                // handled in Page_Load
+                return;
+            }
+            hfView.Value = "list";
+            ClearForm();
+            BindGridData();
+            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                "applyView(); renderGrid();", true);
         }
-        hfView.Value = "list";
-        ClearForm();
-        BindGridData();
-        ScriptManager.RegisterStartupScript(this, GetType(), "view",
-            "currentView='list'; applyView(); renderGrid();", true);
+        catch (Exception ex)
+        {
+            ShowMsg("Error returning to list: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -143,9 +171,16 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void rbFilter_Changed(object sender, EventArgs e)
     {
-        BindGridData();
-        ScriptManager.RegisterStartupScript(this, GetType(), "view",
-            "currentView='list'; applyView(); renderGrid();", true);
+        try
+        {
+            BindGridData();
+            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                "applyView(); renderGrid();", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error applying filter: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -153,18 +188,29 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnSearchCode_Click(object sender, EventArgs e)
     {
-        string code = txtCode.Text.Trim();
-        if (!string.IsNullOrEmpty(code))
+        try
         {
-            int vc;
-            if (int.TryParse(code, out vc))
+            string code = txtCode.Text.Trim();
+            if (string.IsNullOrEmpty(code))
             {
-                LoadVendor(vc);
-                BindSubTabs(vc);
-                hfView.Value = "form";
-                ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                    "currentView='form'; applyView(); switchTab('tab-details');", true);
+                ShowMsg("Please enter a vendor code to search.", "error");
+                return;
             }
+            int vc;
+            if (!int.TryParse(code, out vc))
+            {
+                ShowMsg("Vendor code must be a number.", "error");
+                return;
+            }
+            LoadVendor(vc);
+            BindSubTabs(vc);
+            hfView.Value = "form";
+            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                "applyView(); switchTab('tab-details');", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error searching vendor: " + ex.Message, "error");
         }
     }
 
@@ -173,63 +219,100 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnSave_Click(object sender, EventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(txtName.Text))
-        {
-            ShowMsg("Vendor Name is required.", "error"); return;
-        }
         try
         {
+            if (string.IsNullOrWhiteSpace(txtName.Text))
+            {
+                ShowMsg("Vendor Name is required.", "error");
+                return;
+            }
+
             using (SqlConnection con = new SqlConnection(ConStr))
             {
                 con.Open();
 
-                // Duplicate check
-                string chk = "SELECT COUNT(*) FROM Vendor_Master WHERE VendorName=@n AND IsDeleted=0";
-                using (SqlCommand c = new SqlCommand(chk, con))
+                // Duplicate name check
+                try
                 {
-                    c.Parameters.AddWithValue("@n", txtName.Text.Trim());
-                    if (Convert.ToInt32(c.ExecuteScalar()) > 0)
+                    string chk = "SELECT COUNT(*) FROM Vendor_Master WHERE VendorName=@n AND IsDeleted=0";
+                    using (SqlCommand c = new SqlCommand(chk, con))
                     {
-                        ShowMsg("Vendor Name already exists.", "error"); return;
+                        c.Parameters.AddWithValue("@n", txtName.Text.Trim());
+                        if (Convert.ToInt32(c.ExecuteScalar()) > 0)
+                        {
+                            ShowMsg("Vendor Name already exists.", "error");
+                            return;
+                        }
                     }
                 }
-
-                string ins = @"INSERT INTO Vendor_Master
-                    (VendorName,FullNameLL,PrintInCheque,AccountGroup,InvoicingQty,Branch,VendorType,
-                     SupplierOriginCountryCode,SupplierOriginCountry,StateID,POBox,Address,City,
-                     TelephoneNo,FaxNo,Email,WebSite,VendorRemarks,EvalRemarks,
-                     CP1Name,CP1Desig,CP1Mobile,CP1Email,CP2Name,CP2Desig,CP2Mobile,CP2Email,
-                     BusinessType,TradeLicenseNo,EvaluationCategory,LicenseExpDate,EvalExpDate,VATRegNo,TRNDate)
-                    OUTPUT INSERTED.VendorCode
-                    VALUES
-                    (@n,@fl,@pc,@ag,@iq,@br,@vt,
-                     @orc,@or,@st,@pb,@ad,@ci,
-                     @te,@fx,@em,@ws,@vr,@er,
-                     @c1n,@c1d,@c1m,@c1e,@c2n,@c2d,@c2m,@c2e,
-                     @bt,@tl,@ec,@ld,@ed,@vat,@trd)";
+                catch (SqlException ex)
+                {
+                    ShowMsg("Error checking duplicate vendor: " + ex.Message, "error");
+                    return;
+                }
 
                 int newCode;
-                using (SqlCommand cmd = new SqlCommand(ins, con))
+                try
                 {
-                    AddAllParams(cmd);
-                    newCode = Convert.ToInt32(cmd.ExecuteScalar());
+                    string ins = @"INSERT INTO Vendor_Master
+                        (VendorName,FullNameLL,PrintInCheque,AccountGroup,InvoicingQty,Branch,VendorType,
+                         SupplierOriginCountryCode,SupplierOriginCountry,StateID,POBox,Address,City,
+                         TelephoneNo,FaxNo,Email,WebSite,VendorRemarks,EvalRemarks,
+                         CP1Name,CP1Desig,CP1Mobile,CP1Email,CP2Name,CP2Desig,CP2Mobile,CP2Email,
+                         BusinessType,TradeLicenseNo,EvaluationCategory,LicenseExpDate,EvalExpDate,VATRegNo,TRNDate)
+                        OUTPUT INSERTED.VendorCode
+                        VALUES
+                        (@n,@fl,@pc,@ag,@iq,@br,@vt,
+                         @orc,@or,@st,@pb,@ad,@ci,
+                         @te,@fx,@em,@ws,@vr,@er,
+                         @c1n,@c1d,@c1m,@c1e,@c2n,@c2d,@c2m,@c2e,
+                         @bt,@tl,@ec,@ld,@ed,@vat,@trd)";
+
+                    using (SqlCommand cmd = new SqlCommand(ins, con))
+                    {
+                        AddAllParams(cmd);
+                        newCode = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    ShowMsg("Database error saving vendor: " + ex.Message, "error");
+                    return;
                 }
 
                 hfVendorCode.Value = newCode.ToString();
                 txtCode.Text = newCode.ToString();
 
-                // Save branch mapping
-                SaveBranchMapping(con, newCode);
+                try
+                {
+                    SaveBranchMapping(con, newCode);
+                }
+                catch (Exception ex)
+                {
+                    ShowMsg("Vendor saved but branch mapping failed: " + ex.Message, "error");
+                }
 
-                // Init checklist
-                InitChecklist(con, newCode);
+                try
+                {
+                    InitChecklist(con, newCode);
+                }
+                catch (Exception ex)
+                {
+                    ShowMsg("Vendor saved but checklist init failed: " + ex.Message, "error");
+                }
             }
+
             ShowMsg("Vendor saved successfully. Code: " + hfVendorCode.Value, "success");
             BindGridData();
-            int vc2; int.TryParse(hfVendorCode.Value, out vc2);
-            BindSubTabs(vc2);
+
+            int vc2;
+            if (int.TryParse(hfVendorCode.Value, out vc2))
+                BindSubTabs(vc2);
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error saving vendor: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -237,67 +320,97 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnUpdate_Click(object sender, EventArgs e)
     {
-        int vendorCode;
-        if (!int.TryParse(hfVendorCode.Value, out vendorCode) || vendorCode == 0)
-        {
-            ShowMsg("No vendor selected.", "error"); return;
-        }
-        if (string.IsNullOrWhiteSpace(txtName.Text))
-        {
-            ShowMsg("Vendor Name is required.", "error"); return;
-        }
         try
         {
+            int vendorCode;
+            if (!int.TryParse(hfVendorCode.Value, out vendorCode) || vendorCode == 0)
+            {
+                ShowMsg("No vendor selected for update.", "error");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txtName.Text))
+            {
+                ShowMsg("Vendor Name is required.", "error");
+                return;
+            }
+
             using (SqlConnection con = new SqlConnection(ConStr))
             {
                 con.Open();
 
                 // Duplicate check (exclude self)
-                string chk = "SELECT COUNT(*) FROM Vendor_Master WHERE VendorName=@n AND VendorCode<>@c AND IsDeleted=0";
-                using (SqlCommand c = new SqlCommand(chk, con))
+                try
                 {
-                    c.Parameters.AddWithValue("@n", txtName.Text.Trim());
-                    c.Parameters.AddWithValue("@c", vendorCode);
-                    if (Convert.ToInt32(c.ExecuteScalar()) > 0)
+                    string chk = "SELECT COUNT(*) FROM Vendor_Master WHERE VendorName=@n AND VendorCode<>@c AND IsDeleted=0";
+                    using (SqlCommand c = new SqlCommand(chk, con))
                     {
-                        ShowMsg("Vendor Name already exists.", "error"); return;
+                        c.Parameters.AddWithValue("@n", txtName.Text.Trim());
+                        c.Parameters.AddWithValue("@c", vendorCode);
+                        if (Convert.ToInt32(c.ExecuteScalar()) > 0)
+                        {
+                            ShowMsg("Vendor Name already exists for another vendor.", "error");
+                            return;
+                        }
                     }
                 }
-
-                string upd = @"UPDATE Vendor_Master SET
-                    VendorName=@n, FullNameLL=@fl, PrintInCheque=@pc, AccountGroup=@ag,
-                    InvoicingQty=@iq, Branch=@br, VendorType=@vt,
-                    SupplierOriginCountryCode=@orc, SupplierOriginCountry=@or,
-                    StateID=@st, POBox=@pb, Address=@ad, City=@ci,
-                    TelephoneNo=@te, FaxNo=@fx, Email=@em, WebSite=@ws,
-                    VendorRemarks=@vr, EvalRemarks=@er,
-                    CP1Name=@c1n, CP1Desig=@c1d, CP1Mobile=@c1m, CP1Email=@c1e,
-                    CP2Name=@c2n, CP2Desig=@c2d, CP2Mobile=@c2m, CP2Email=@c2e,
-                    BusinessType=@bt, TradeLicenseNo=@tl, EvaluationCategory=@ec,
-                    LicenseExpDate=@ld, EvalExpDate=@ed, VATRegNo=@vat, TRNDate=@trd
-                    WHERE VendorCode=@vc";
-
-                using (SqlCommand cmd = new SqlCommand(upd, con))
+                catch (SqlException ex)
                 {
-                    AddAllParams(cmd);
-                    cmd.Parameters.AddWithValue("@vc", vendorCode);
-                    cmd.ExecuteNonQuery();
+                    ShowMsg("Error checking duplicate vendor name: " + ex.Message, "error");
+                    return;
                 }
 
-                // Delete existing branch mapping and re-save
-                using (SqlCommand del = new SqlCommand(
-                    "DELETE FROM Vendor_Branch_Mapping WHERE VendorCode=@vc", con))
+                try
                 {
-                    del.Parameters.AddWithValue("@vc", vendorCode);
-                    del.ExecuteNonQuery();
+                    string upd = @"UPDATE Vendor_Master SET
+                        VendorName=@n, FullNameLL=@fl, PrintInCheque=@pc, AccountGroup=@ag,
+                        InvoicingQty=@iq, Branch=@br, VendorType=@vt,
+                        SupplierOriginCountryCode=@orc, SupplierOriginCountry=@or,
+                        StateID=@st, POBox=@pb, Address=@ad, City=@ci,
+                        TelephoneNo=@te, FaxNo=@fx, Email=@em, WebSite=@ws,
+                        VendorRemarks=@vr, EvalRemarks=@er,
+                        CP1Name=@c1n, CP1Desig=@c1d, CP1Mobile=@c1m, CP1Email=@c1e,
+                        CP2Name=@c2n, CP2Desig=@c2d, CP2Mobile=@c2m, CP2Email=@c2e,
+                        BusinessType=@bt, TradeLicenseNo=@tl, EvaluationCategory=@ec,
+                        LicenseExpDate=@ld, EvalExpDate=@ed, VATRegNo=@vat, TRNDate=@trd
+                        WHERE VendorCode=@vc";
+
+                    using (SqlCommand cmd = new SqlCommand(upd, con))
+                    {
+                        AddAllParams(cmd);
+                        cmd.Parameters.AddWithValue("@vc", vendorCode);
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-                SaveBranchMapping(con, vendorCode);
+                catch (SqlException ex)
+                {
+                    ShowMsg("Database error updating vendor: " + ex.Message, "error");
+                    return;
+                }
+
+                try
+                {
+                    using (SqlCommand del = new SqlCommand(
+                        "DELETE FROM Vendor_Branch_Mapping WHERE VendorCode=@vc", con))
+                    {
+                        del.Parameters.AddWithValue("@vc", vendorCode);
+                        del.ExecuteNonQuery();
+                    }
+                    SaveBranchMapping(con, vendorCode);
+                }
+                catch (Exception ex)
+                {
+                    ShowMsg("Vendor updated but branch mapping failed: " + ex.Message, "error");
+                }
             }
+
             ShowMsg("Vendor updated successfully.", "success");
             BindGridData();
             BindSubTabs(vendorCode);
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error updating vendor: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -305,13 +418,15 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnDelete_Click(object sender, EventArgs e)
     {
-        int vendorCode;
-        if (!int.TryParse(hfVendorCode.Value, out vendorCode) || vendorCode == 0)
-        {
-            ShowMsg("No vendor selected.", "error"); return;
-        }
         try
         {
+            int vendorCode;
+            if (!int.TryParse(hfVendorCode.Value, out vendorCode) || vendorCode == 0)
+            {
+                ShowMsg("No vendor selected for deletion.", "error");
+                return;
+            }
+
             using (SqlConnection con = new SqlConnection(ConStr))
             {
                 string q = "UPDATE Vendor_Master SET IsDeleted=1 WHERE VendorCode=@vc";
@@ -319,17 +434,30 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 {
                     cmd.Parameters.AddWithValue("@vc", vendorCode);
                     con.Open();
-                    cmd.ExecuteNonQuery();
+                    int rows = cmd.ExecuteNonQuery();
+                    if (rows == 0)
+                    {
+                        ShowMsg("Vendor not found or already deleted.", "error");
+                        return;
+                    }
                 }
             }
-            ShowMsg("Vendor deleted.", "success");
+
+            ShowMsg("Vendor deleted successfully.", "success");
             ClearForm();
             hfView.Value = "list";
             BindGridData();
             ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                "currentView='list'; applyView(); renderGrid();", true);
+                "applyView(); renderGrid();", true);
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (SqlException ex)
+        {
+            ShowMsg("Database error deleting vendor: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error deleting vendor: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -337,10 +465,17 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnClear_Click(object sender, EventArgs e)
     {
-        ClearForm();
-        hfVendorCode.Value = "0";
-        ScriptManager.RegisterStartupScript(this, GetType(), "view",
-            "switchTab('tab-details');", true);
+        try
+        {
+            ClearForm();
+            hfVendorCode.Value = "0";
+            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                "switchTab('tab-details');", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error clearing form: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -348,7 +483,14 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnPrint_Click(object sender, EventArgs e)
     {
-        ScriptManager.RegisterStartupScript(this, GetType(), "prnt", "window.print();", true);
+        try
+        {
+            ScriptManager.RegisterStartupScript(this, GetType(), "prnt", "window.print();", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error triggering print: " + ex.Message, "error");
+        }
     }
 
     // =============================================
@@ -390,214 +532,384 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 Response.End();
             }
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (System.Threading.ThreadAbortException)
+        {
+            // Response.End() always throws ThreadAbortException — this is normal, ignore it
+        }
+        catch (SqlException ex)
+        {
+            ShowMsg("Database error exporting data: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error exporting to Excel: " + ex.Message, "error");
+        }
     }
 
     // =============================================
-    // NAME HISTORY
+    // NAME HISTORY — ADD / EDIT
     // =============================================
     protected void btnAddHistory_Click(object sender, EventArgs e)
     {
-        int vc; if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
-        { ShowMsg("Save vendor first.", "error"); return; }
-
-        int slno; int.TryParse(hfNHSLNO.Value, out slno);
-
         try
         {
+            int vc;
+            if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
+            {
+                ShowMsg("Please save the vendor first before adding name history.", "error");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txtHistoryName.Text))
+            {
+                ShowMsg("History Name is required.", "error");
+                return;
+            }
+
+            int slno;
+            int.TryParse(hfNHSLNO.Value, out slno);
+
             using (SqlConnection con = new SqlConnection(ConStr))
             {
                 con.Open();
-                if (slno > 0) // edit existing
+                if (slno > 0)
                 {
-                    string upd = @"UPDATE Vendor_Name_History SET
-                        HistoryName=@hn, CHQHistoryName=@cn, ReplaceDate=@rd, HistoryFullName=@hf
-                        WHERE SLNO=@sl AND VendorCode=@vc";
-                    using (SqlCommand cmd = new SqlCommand(upd, con))
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@hn", txtHistoryName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@cn", txtCHQHistoryName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@rd", ParseDate(txtReplaceDate.Text));
-                        cmd.Parameters.AddWithValue("@hf", txtHistoryName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@sl", slno);
-                        cmd.Parameters.AddWithValue("@vc", vc);
-                        cmd.ExecuteNonQuery();
+                        string upd = @"UPDATE Vendor_Name_History SET
+                            HistoryName=@hn, CHQHistoryName=@cn, ReplaceDate=@rd, HistoryFullName=@hf
+                            WHERE SLNO=@sl AND VendorCode=@vc";
+                        using (SqlCommand cmd = new SqlCommand(upd, con))
+                        {
+                            cmd.Parameters.AddWithValue("@hn", txtHistoryName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@cn", txtCHQHistoryName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@rd", ParseDate(txtReplaceDate.Text));
+                            cmd.Parameters.AddWithValue("@hf", txtHistoryName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@sl", slno);
+                            cmd.Parameters.AddWithValue("@vc", vc);
+                            cmd.ExecuteNonQuery();
+                        }
+                        hfNHSLNO.Value = "0";
                     }
-                    hfNHSLNO.Value = "0";
+                    catch (SqlException ex)
+                    {
+                        ShowMsg("Database error updating history record: " + ex.Message, "error");
+                        return;
+                    }
                 }
                 else
                 {
-                    string ins = @"INSERT INTO Vendor_Name_History(VendorCode,HistoryName,HistoryFullName,CHQHistoryName,ReplaceDate)
-                        VALUES(@vc,@hn,@hf,@cn,@rd)";
-                    using (SqlCommand cmd = new SqlCommand(ins, con))
+                    try
+                    {
+                        string ins = @"INSERT INTO Vendor_Name_History(VendorCode,HistoryName,HistoryFullName,CHQHistoryName,ReplaceDate)
+                            VALUES(@vc,@hn,@hf,@cn,@rd)";
+                        using (SqlCommand cmd = new SqlCommand(ins, con))
+                        {
+                            cmd.Parameters.AddWithValue("@vc", vc);
+                            cmd.Parameters.AddWithValue("@hn", txtHistoryName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@hf", txtHistoryName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@cn", txtCHQHistoryName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@rd", ParseDate(txtReplaceDate.Text));
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch (SqlException ex)
+                    {
+                        ShowMsg("Database error adding history record: " + ex.Message, "error");
+                        return;
+                    }
+                }
+            }
+
+            txtHistoryName.Text = "";
+            txtCHQHistoryName.Text = "";
+            txtReplaceDate.Text = "";
+            BindNameHistory(vc);
+            ShowMsg("Name history saved successfully.", "success");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error saving name history: " + ex.Message, "error");
+        }
+
+        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+            "applyView(); switchTab('tab-namehistory');", true);
+    }
+
+    // =============================================
+    // NAME HISTORY GRID — ROW COMMAND
+    // =============================================
+    protected void gvNameHistory_RowCommand(object sender, GridViewCommandEventArgs e)
+    {
+        try
+        {
+            int slno;
+            if (!int.TryParse(e.CommandArgument.ToString(), out slno))
+            {
+                ShowMsg("Invalid history record ID.", "error");
+                return;
+            }
+            int vc;
+            int.TryParse(hfVendorCode.Value, out vc);
+
+            if (e.CommandName == "EditNH")
+            {
+                try
+                {
+                    using (SqlConnection con = new SqlConnection(ConStr))
+                    {
+                        string q = "SELECT * FROM Vendor_Name_History WHERE SLNO=@sl";
+                        using (SqlCommand cmd = new SqlCommand(q, con))
+                        {
+                            cmd.Parameters.AddWithValue("@sl", slno);
+                            con.Open();
+                            SqlDataReader dr = cmd.ExecuteReader();
+                            if (dr.Read())
+                            {
+                                txtHistoryName.Text = dr["HistoryName"].ToString();
+                                txtCHQHistoryName.Text = dr["CHQHistoryName"].ToString();
+                                if (dr["ReplaceDate"] != DBNull.Value)
+                                    txtReplaceDate.Text = Convert.ToDateTime(dr["ReplaceDate"]).ToString("yyyy-MM-dd");
+                                hfNHSLNO.Value = slno.ToString();
+                            }
+                            else
+                            {
+                                ShowMsg("History record not found.", "error");
+                            }
+                        }
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    ShowMsg("Database error loading history record: " + ex.Message, "error");
+                }
+            }
+            else if (e.CommandName == "DeleteNH")
+            {
+                try
+                {
+                    using (SqlConnection con = new SqlConnection(ConStr))
+                    {
+                        using (SqlCommand cmd = new SqlCommand(
+                            "DELETE FROM Vendor_Name_History WHERE SLNO=@sl", con))
+                        {
+                            cmd.Parameters.AddWithValue("@sl", slno);
+                            con.Open();
+                            int rows = cmd.ExecuteNonQuery();
+                            if (rows == 0)
+                                ShowMsg("History record not found or already deleted.", "error");
+                            else
+                                ShowMsg("History record deleted.", "success");
+                        }
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    ShowMsg("Database error deleting history record: " + ex.Message, "error");
+                }
+            }
+
+            BindNameHistory(vc);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error in name history: " + ex.Message, "error");
+        }
+
+        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+            "applyView(); switchTab('tab-namehistory');", true);
+    }
+
+    // =============================================
+    // UPLOAD ATTACHMENT
+    // =============================================
+    protected void btnUpload_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            int vc;
+            if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
+            {
+                ShowMsg("Please save the vendor first before uploading attachments.", "error");
+                return;
+            }
+            if (!fuAttach.HasFile)
+            {
+                ShowMsg("Please choose a file to upload.", "error");
+                return;
+            }
+            if (fuAttach.PostedFile.ContentLength > 3 * 1024 * 1024)
+            {
+                ShowMsg("File size exceeds the 3MB maximum limit.", "error");
+                return;
+            }
+
+            string folder = "";
+            try
+            {
+                folder = Server.MapPath("~/App_Data/VendorAttachments/" + vc + "/");
+                if (!Directory.Exists(folder))
+                    Directory.CreateDirectory(folder);
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Error creating upload folder: " + ex.Message, "error");
+                return;
+            }
+
+            string fname = "";
+            string virtualPath = "";
+            try
+            {
+                fname = DateTime.Now.Ticks + "_" + Path.GetFileName(fuAttach.FileName);
+                string fpath = Path.Combine(folder, fname);
+                fuAttach.SaveAs(fpath);
+                virtualPath = "~/App_Data/VendorAttachments/" + vc + "/" + fname;
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Error saving file to disk: " + ex.Message, "error");
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection con = new SqlConnection(ConStr))
+                {
+                    string q = "INSERT INTO Vendor_Attachments(VendorCode,Remarks,FilePath) VALUES(@vc,@rm,@fp)";
+                    using (SqlCommand cmd = new SqlCommand(q, con))
                     {
                         cmd.Parameters.AddWithValue("@vc", vc);
-                        cmd.Parameters.AddWithValue("@hn", txtHistoryName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@hf", txtHistoryName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@cn", txtCHQHistoryName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@rd", ParseDate(txtReplaceDate.Text));
+                        cmd.Parameters.AddWithValue("@rm", txtAttachRemarks.Text.Trim());
+                        cmd.Parameters.AddWithValue("@fp", virtualPath);
+                        con.Open();
                         cmd.ExecuteNonQuery();
                     }
                 }
             }
-            txtHistoryName.Text = ""; txtCHQHistoryName.Text = ""; txtReplaceDate.Text = "";
-            BindNameHistory(vc);
-            ShowMsg("Name history saved.", "success");
+            catch (SqlException ex)
+            {
+                ShowMsg("File saved but database record failed: " + ex.Message, "error");
+                return;
+            }
+
+            txtAttachRemarks.Text = "";
+            BindAttachments(vc);
+            ShowMsg("File uploaded successfully.", "success");
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error uploading file: " + ex.Message, "error");
+        }
 
         ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "currentView='form'; applyView(); switchTab('tab-namehistory');", true);
+            "applyView(); switchTab('tab-attachments');", true);
     }
 
-    protected void gvNameHistory_RowCommand(object sender, GridViewCommandEventArgs e)
+    // =============================================
+    // ATTACHMENTS GRID — ROW COMMAND
+    // =============================================
+    protected void gvAttachments_RowCommand(object sender, GridViewCommandEventArgs e)
     {
-        int slno = Convert.ToInt32(e.CommandArgument);
-        int vc; int.TryParse(hfVendorCode.Value, out vc);
-
-        if (e.CommandName == "EditNH")
+        try
         {
-            try
+            int attachId;
+            if (!int.TryParse(e.CommandArgument.ToString(), out attachId))
             {
-                using (SqlConnection con = new SqlConnection(ConStr))
+                ShowMsg("Invalid attachment ID.", "error");
+                return;
+            }
+            int vc;
+            int.TryParse(hfVendorCode.Value, out vc);
+
+            if (e.CommandName == "DeleteAtt")
+            {
+                string filePath = "";
+                try
                 {
-                    string q = "SELECT * FROM Vendor_Name_History WHERE SLNO=@sl";
-                    using (SqlCommand cmd = new SqlCommand(q, con))
+                    using (SqlConnection con = new SqlConnection(ConStr))
                     {
-                        cmd.Parameters.AddWithValue("@sl", slno);
-                        con.Open();
-                        SqlDataReader dr = cmd.ExecuteReader();
-                        if (dr.Read())
+                        using (SqlCommand cmd = new SqlCommand(
+                            "SELECT FilePath FROM Vendor_Attachments WHERE AttachID=@id", con))
                         {
-                            txtHistoryName.Text = dr["HistoryName"].ToString();
-                            txtCHQHistoryName.Text = dr["CHQHistoryName"].ToString();
-                            if (dr["ReplaceDate"] != DBNull.Value)
-                                txtReplaceDate.Text = Convert.ToDateTime(dr["ReplaceDate"]).ToString("yyyy-MM-dd");
-                            hfNHSLNO.Value = slno.ToString();
+                            cmd.Parameters.AddWithValue("@id", attachId);
+                            con.Open();
+                            object res = cmd.ExecuteScalar();
+                            filePath = res != null ? res.ToString() : "";
                         }
                     }
                 }
-            }
-            catch (Exception ex) { ShowMsg(ex.Message, "error"); }
-        }
-        else if (e.CommandName == "DeleteNH")
-        {
-            try
-            {
-                using (SqlConnection con = new SqlConnection(ConStr))
+                catch (SqlException ex)
                 {
-                    using (SqlCommand cmd = new SqlCommand(
-                        "DELETE FROM Vendor_Name_History WHERE SLNO=@sl", con))
-                    {
-                        cmd.Parameters.AddWithValue("@sl", slno);
-                        con.Open(); cmd.ExecuteNonQuery();
-                    }
+                    ShowMsg("Database error retrieving attachment path: " + ex.Message, "error");
+                    return;
                 }
-                ShowMsg("History record deleted.", "success");
-            }
-            catch (Exception ex) { ShowMsg(ex.Message, "error"); }
-        }
 
-        BindNameHistory(vc);
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "currentView='form'; applyView(); switchTab('tab-namehistory');", true);
-    }
-
-    // =============================================
-    // ATTACHMENTS
-    // =============================================
-    protected void btnUpload_Click(object sender, EventArgs e)
-    {
-        int vc; if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
-        { ShowMsg("Save vendor first.", "error"); return; }
-
-        if (!fuAttach.HasFile)
-        { ShowMsg("Please choose a file.", "error"); return; }
-
-        if (fuAttach.PostedFile.ContentLength > 3 * 1024 * 1024)
-        { ShowMsg("File exceeds 3MB limit.", "error"); return; }
-
-        try
-        {
-            string folder = Server.MapPath("~/App_Data/VendorAttachments/" + vc + "/");
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-            string fname = DateTime.Now.Ticks + "_" + Path.GetFileName(fuAttach.FileName);
-            string fpath = Path.Combine(folder, fname);
-            fuAttach.SaveAs(fpath);
-
-            string virtualPath = "~/App_Data/VendorAttachments/" + vc + "/" + fname;
-
-            using (SqlConnection con = new SqlConnection(ConStr))
-            {
-                string q = "INSERT INTO Vendor_Attachments(VendorCode,Remarks,FilePath) VALUES(@vc,@rm,@fp)";
-                using (SqlCommand cmd = new SqlCommand(q, con))
-                {
-                    cmd.Parameters.AddWithValue("@vc", vc);
-                    cmd.Parameters.AddWithValue("@rm", txtAttachRemarks.Text.Trim());
-                    cmd.Parameters.AddWithValue("@fp", virtualPath);
-                    con.Open(); cmd.ExecuteNonQuery();
-                }
-            }
-            txtAttachRemarks.Text = "";
-            BindAttachments(vc);
-            ShowMsg("File uploaded.", "success");
-        }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
-
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "currentView='form'; applyView(); switchTab('tab-attachments');", true);
-    }
-
-    protected void gvAttachments_RowCommand(object sender, GridViewCommandEventArgs e)
-    {
-        int attachId = Convert.ToInt32(e.CommandArgument);
-        int vc; int.TryParse(hfVendorCode.Value, out vc);
-
-        if (e.CommandName == "DeleteAtt")
-        {
-            try
-            {
-                string filePath = "";
-                using (SqlConnection con = new SqlConnection(ConStr))
-                {
-                    using (SqlCommand cmd = new SqlCommand(
-                        "SELECT FilePath FROM Vendor_Attachments WHERE AttachID=@id", con))
-                    {
-                        cmd.Parameters.AddWithValue("@id", attachId);
-                        con.Open();
-                        object res = cmd.ExecuteScalar();
-                        if (res != null) filePath = res.ToString();
-                    }
-                }
-                // Try delete physical file
+                // Try to delete physical file — don't stop if it fails (file may already be gone)
                 if (!string.IsNullOrEmpty(filePath))
                 {
-                    try { File.Delete(Server.MapPath(filePath)); } catch { }
-                }
-                using (SqlConnection con = new SqlConnection(ConStr))
-                {
-                    using (SqlCommand cmd = new SqlCommand(
-                        "DELETE FROM Vendor_Attachments WHERE AttachID=@id", con))
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@id", attachId);
-                        con.Open(); cmd.ExecuteNonQuery();
+                        string physicalPath = Server.MapPath(filePath);
+                        if (File.Exists(physicalPath))
+                            File.Delete(physicalPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMsg("Warning: Could not delete physical file: " + ex.Message, "error");
+                        // Continue to remove DB record regardless
                     }
                 }
-                ShowMsg("Attachment deleted.", "success");
+
+                try
+                {
+                    using (SqlConnection con = new SqlConnection(ConStr))
+                    {
+                        using (SqlCommand cmd = new SqlCommand(
+                            "DELETE FROM Vendor_Attachments WHERE AttachID=@id", con))
+                        {
+                            cmd.Parameters.AddWithValue("@id", attachId);
+                            con.Open();
+                            int rows = cmd.ExecuteNonQuery();
+                            if (rows == 0)
+                                ShowMsg("Attachment not found or already deleted.", "error");
+                            else
+                                ShowMsg("Attachment deleted successfully.", "success");
+                        }
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    ShowMsg("Database error deleting attachment record: " + ex.Message, "error");
+                    return;
+                }
+
+                BindAttachments(vc);
             }
-            catch (Exception ex) { ShowMsg(ex.Message, "error"); }
-            BindAttachments(vc);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error processing attachment: " + ex.Message, "error");
         }
 
         ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "currentView='form'; applyView(); switchTab('tab-attachments');", true);
+            "applyView(); switchTab('tab-attachments');", true);
     }
 
+    // =============================================
+    // VIEW / DOWNLOAD ATTACHMENT
+    // =============================================
     protected void btnViewDownload_Click(object sender, EventArgs e)
     {
-        ShowMsg("Select a file in the grid to download.", "success");
+        try
+        {
+            ShowMsg("Select a file row in the grid to download.", "success");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error: " + ex.Message, "error");
+        }
         ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "currentView='form'; applyView(); switchTab('tab-attachments');", true);
+            "applyView(); switchTab('tab-attachments');", true);
     }
 
     // =============================================
@@ -605,40 +917,65 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     // =============================================
     protected void btnSaveChecklist_Click(object sender, EventArgs e)
     {
-        int vc; if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
-        { ShowMsg("Save vendor first.", "error"); return; }
-
         try
         {
+            int vc;
+            if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
+            {
+                ShowMsg("Please save the vendor first before saving the checklist.", "error");
+                return;
+            }
+
             using (SqlConnection con = new SqlConnection(ConStr))
             {
                 con.Open();
                 foreach (GridViewRow row in gvChecklist.Rows)
                 {
-                    int checkId = Convert.ToInt32(gvChecklist.DataKeys[row.RowIndex].Value);
-                    CheckBox cb = (CheckBox)row.FindControl("chkItem");
-                    TextBox tb = (TextBox)row.FindControl("txtCLRemarks");
-                    bool isChecked = cb != null && cb.Checked;
-                    string remarks = tb != null ? tb.Text.Trim() : "";
-
-                    string q = @"UPDATE Vendor_Checklist SET IsChecked=@ic, Remarks=@rm
-                                 WHERE CheckID=@cid";
-                    using (SqlCommand cmd = new SqlCommand(q, con))
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@ic", isChecked);
-                        cmd.Parameters.AddWithValue("@rm", remarks);
-                        cmd.Parameters.AddWithValue("@cid", checkId);
-                        cmd.ExecuteNonQuery();
+                        int checkId = Convert.ToInt32(gvChecklist.DataKeys[row.RowIndex].Value);
+                        CheckBox cb = (CheckBox)row.FindControl("chkItem");
+                        TextBox tb = (TextBox)row.FindControl("txtCLRemarks");
+
+                        if (cb == null)
+                        {
+                            ShowMsg("Checklist row " + (row.RowIndex + 1) + ": checkbox control not found.", "error");
+                            continue;
+                        }
+
+                        bool isChecked = cb.Checked;
+                        string remarks = tb != null ? tb.Text.Trim() : "";
+
+                        string q = "UPDATE Vendor_Checklist SET IsChecked=@ic, Remarks=@rm WHERE CheckID=@cid";
+                        using (SqlCommand cmd = new SqlCommand(q, con))
+                        {
+                            cmd.Parameters.AddWithValue("@ic", isChecked);
+                            cmd.Parameters.AddWithValue("@rm", remarks);
+                            cmd.Parameters.AddWithValue("@cid", checkId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch (SqlException ex)
+                    {
+                        ShowMsg("Database error saving checklist row " + (row.RowIndex + 1) + ": " + ex.Message, "error");
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMsg("Error on checklist row " + (row.RowIndex + 1) + ": " + ex.Message, "error");
                     }
                 }
             }
-            ShowMsg("Checklist saved.", "success");
+
+            ShowMsg("Checklist saved successfully.", "success");
             BindChecklist(vc);
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error saving checklist: " + ex.Message, "error");
+        }
 
         ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "currentView='form'; applyView(); switchTab('tab-checklist');", true);
+            "applyView(); switchTab('tab-checklist');", true);
     }
 
     // =============================================
@@ -664,7 +1001,10 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                         txtFullNameLL.Text = dr["FullNameLL"].ToString();
                         txtPrintInCheque.Text = dr["PrintInCheque"].ToString();
                         SetDDL(ddlAccountGroup, dr["AccountGroup"]);
-                        rblInvoicingQty.SelectedValue = dr["InvoicingQty"].ToString();
+
+                        try { rblInvoicingQty.SelectedValue = dr["InvoicingQty"].ToString(); }
+                        catch { rblInvoicingQty.SelectedValue = "Supplier"; }
+
                         SetDDL(ddlBranch, dr["Branch"]);
                         SetDDL(ddlVendorType, dr["VendorType"]);
                         txtOriginCode.Text = dr["SupplierOriginCountryCode"].ToString();
@@ -690,19 +1030,40 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                         txtBusinessType.Text = dr["BusinessType"].ToString();
                         txtTradeLicenseNo.Text = dr["TradeLicenseNo"].ToString();
                         SetDDL(ddlEvalCategory, dr["EvaluationCategory"]);
-                        if (dr["LicenseExpDate"] != DBNull.Value)
-                            txtLicenseExpDate.Text = Convert.ToDateTime(dr["LicenseExpDate"]).ToString("yyyy-MM-dd");
-                        if (dr["EvalExpDate"] != DBNull.Value)
-                            txtEvalExpDate.Text = Convert.ToDateTime(dr["EvalExpDate"]).ToString("yyyy-MM-dd");
+
+                        try
+                        {
+                            if (dr["LicenseExpDate"] != DBNull.Value)
+                                txtLicenseExpDate.Text = Convert.ToDateTime(dr["LicenseExpDate"]).ToString("yyyy-MM-dd");
+                            if (dr["EvalExpDate"] != DBNull.Value)
+                                txtEvalExpDate.Text = Convert.ToDateTime(dr["EvalExpDate"]).ToString("yyyy-MM-dd");
+                            if (dr["TRNDate"] != DBNull.Value)
+                                txtTRNDate.Text = Convert.ToDateTime(dr["TRNDate"]).ToString("yyyy-MM-dd");
+                        }
+                        catch (Exception ex)
+                        {
+                            ShowMsg("Warning: Error parsing date fields: " + ex.Message, "error");
+                        }
+
                         txtVATRegNo.Text = dr["VATRegNo"].ToString();
-                        if (dr["TRNDate"] != DBNull.Value)
-                            txtTRNDate.Text = Convert.ToDateTime(dr["TRNDate"]).ToString("yyyy-MM-dd");
+                    }
+                    else
+                    {
+                        ShowMsg("Vendor code " + vendorCode + " not found.", "error");
                     }
                 }
             }
+
             LoadBranchMapping(vendorCode);
         }
-        catch (Exception ex) { ShowMsg(ex.Message, "error"); }
+        catch (SqlException ex)
+        {
+            ShowMsg("Database error loading vendor: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error loading vendor: " + ex.Message, "error");
+        }
     }
 
     private void BindSubTabs(int vendorCode)
@@ -729,7 +1090,14 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 gvNameHistory.DataBind();
             }
         }
-        catch { }
+        catch (SqlException ex)
+        {
+            ShowMsg("Error loading name history: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error loading name history: " + ex.Message, "error");
+        }
     }
 
     private void BindAttachments(int vc)
@@ -747,7 +1115,14 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 gvAttachments.DataBind();
             }
         }
-        catch { }
+        catch (SqlException ex)
+        {
+            ShowMsg("Error loading attachments: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error loading attachments: " + ex.Message, "error");
+        }
     }
 
     private void BindChecklist(int vc)
@@ -769,7 +1144,14 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 gvChecklist.DataBind();
             }
         }
-        catch { }
+        catch (SqlException ex)
+        {
+            ShowMsg("Error loading checklist: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error loading checklist: " + ex.Message, "error");
+        }
     }
 
     private void BindAudit(int vc)
@@ -787,7 +1169,14 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 gvAudit.DataBind();
             }
         }
-        catch { }
+        catch (SqlException ex)
+        {
+            ShowMsg("Error loading audit data: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error loading audit data: " + ex.Message, "error");
+        }
     }
 
     private void LoadBranchMapping(int vc)
@@ -803,35 +1192,49 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 da.Fill(dt);
                 foreach (DataRow r in dt.Rows)
                 {
-                    string br = r["Branch"].ToString();
-                    if (br == "CMP")
+                    try
                     {
-                        SetDDL(ddlCMPPayTerm, r["PaymentTerms"]);
-                        SetDDL(ddlCMPTaxType, r["TaxType"]);
-                        rblCMPCreditReq.SelectedValue = Convert.ToBoolean(r["CreditLimitRequired"]) ? "1" : "0";
-                        txtCMPCreditAmt.Text = r["CreditLimitAmount"].ToString();
-                        rblCMPStatus.SelectedValue = r["VendorStatus"].ToString();
+                        string br = r["Branch"].ToString();
+                        if (br == "CMP")
+                        {
+                            SetDDL(ddlCMPPayTerm, r["PaymentTerms"]);
+                            SetDDL(ddlCMPTaxType, r["TaxType"]);
+                            rblCMPCreditReq.SelectedValue = Convert.ToBoolean(r["CreditLimitRequired"]) ? "1" : "0";
+                            txtCMPCreditAmt.Text = r["CreditLimitAmount"].ToString();
+                            rblCMPStatus.SelectedValue = r["VendorStatus"].ToString();
+                        }
+                        else if (br == "PRC")
+                        {
+                            SetDDL(ddlPRCPayTerm, r["PaymentTerms"]);
+                            SetDDL(ddlPRCTaxType, r["TaxType"]);
+                            rblPRCCreditReq.SelectedValue = Convert.ToBoolean(r["CreditLimitRequired"]) ? "1" : "0";
+                            txtPRCCreditAmt.Text = r["CreditLimitAmount"].ToString();
+                            rblPRCStatus.SelectedValue = r["VendorStatus"].ToString();
+                        }
+                        else if (br == "RMC")
+                        {
+                            SetDDL(ddlRMCPayTerm, r["PaymentTerms"]);
+                            SetDDL(ddlRMCTaxType, r["TaxType"]);
+                            rblRMCCreditReq.SelectedValue = Convert.ToBoolean(r["CreditLimitRequired"]) ? "1" : "0";
+                            txtRMCCreditAmt.Text = r["CreditLimitAmount"].ToString();
+                            rblRMCStatus.SelectedValue = r["VendorStatus"].ToString();
+                        }
                     }
-                    else if (br == "PRC")
+                    catch (Exception ex)
                     {
-                        SetDDL(ddlPRCPayTerm, r["PaymentTerms"]);
-                        SetDDL(ddlPRCTaxType, r["TaxType"]);
-                        rblPRCCreditReq.SelectedValue = Convert.ToBoolean(r["CreditLimitRequired"]) ? "1" : "0";
-                        txtPRCCreditAmt.Text = r["CreditLimitAmount"].ToString();
-                        rblPRCStatus.SelectedValue = r["VendorStatus"].ToString();
-                    }
-                    else if (br == "RMC")
-                    {
-                        SetDDL(ddlRMCPayTerm, r["PaymentTerms"]);
-                        SetDDL(ddlRMCTaxType, r["TaxType"]);
-                        rblRMCCreditReq.SelectedValue = Convert.ToBoolean(r["CreditLimitRequired"]) ? "1" : "0";
-                        txtRMCCreditAmt.Text = r["CreditLimitAmount"].ToString();
-                        rblRMCStatus.SelectedValue = r["VendorStatus"].ToString();
+                        ShowMsg("Warning: Error loading branch '" + r["Branch"] + "' mapping: " + ex.Message, "error");
                     }
                 }
             }
         }
-        catch { }
+        catch (SqlException ex)
+        {
+            ShowMsg("Database error loading branch mapping: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error loading branch mapping: " + ex.Message, "error");
+        }
     }
 
     private void SaveBranchMapping(SqlConnection con, int vc)
@@ -843,51 +1246,76 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         TextBox[] creditAmts = { txtCMPCreditAmt, txtPRCCreditAmt, txtRMCCreditAmt };
         RadioButtonList[] statuses = { rblCMPStatus, rblPRCStatus, rblRMCStatus };
 
-        string ins = @"INSERT INTO Vendor_Branch_Mapping(VendorCode,Branch,PaymentTerms,TaxType,CreditLimitRequired,CreditLimitAmount,VendorStatus)
-                       VALUES(@vc,@br,@pt,@tt,@cr,@ca,@vs)";
+        string ins = @"INSERT INTO Vendor_Branch_Mapping
+            (VendorCode,Branch,PaymentTerms,TaxType,CreditLimitRequired,CreditLimitAmount,VendorStatus)
+            VALUES(@vc,@br,@pt,@tt,@cr,@ca,@vs)";
+
         for (int i = 0; i < 3; i++)
         {
-            using (SqlCommand cmd = new SqlCommand(ins, con))
+            try
             {
-                cmd.Parameters.AddWithValue("@vc", vc);
-                cmd.Parameters.AddWithValue("@br", branches[i]);
-                cmd.Parameters.AddWithValue("@pt", payTerms[i].SelectedValue);
-                cmd.Parameters.AddWithValue("@tt", taxTypes[i].SelectedValue);
-                cmd.Parameters.AddWithValue("@cr", creditReqs[i].SelectedValue == "1");
-                decimal amt; decimal.TryParse(creditAmts[i].Text, out amt);
-                cmd.Parameters.AddWithValue("@ca", amt);
-                cmd.Parameters.AddWithValue("@vs", statuses[i].SelectedValue);
-                cmd.ExecuteNonQuery();
+                using (SqlCommand cmd = new SqlCommand(ins, con))
+                {
+                    cmd.Parameters.AddWithValue("@vc", vc);
+                    cmd.Parameters.AddWithValue("@br", branches[i]);
+                    cmd.Parameters.AddWithValue("@pt", payTerms[i].SelectedValue);
+                    cmd.Parameters.AddWithValue("@tt", taxTypes[i].SelectedValue);
+                    cmd.Parameters.AddWithValue("@cr", creditReqs[i].SelectedValue == "1");
+                    decimal amt;
+                    decimal.TryParse(creditAmts[i].Text, out amt);
+                    cmd.Parameters.AddWithValue("@ca", amt);
+                    cmd.Parameters.AddWithValue("@vs", statuses[i].SelectedValue);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (SqlException ex)
+            {
+                ShowMsg("Error saving branch mapping for " + branches[i] + ": " + ex.Message, "error");
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Unexpected error saving branch " + branches[i] + ": " + ex.Message, "error");
             }
         }
     }
 
     private void InitChecklist(SqlConnection con, int vc)
     {
-        // Check if checklist already exists for this vendor
-        using (SqlCommand chk = new SqlCommand(
-            "SELECT COUNT(*) FROM Vendor_Checklist WHERE VendorCode=@vc", con))
+        try
         {
-            chk.Parameters.AddWithValue("@vc", vc);
-            if (Convert.ToInt32(chk.ExecuteScalar()) > 0) return;
+            using (SqlCommand chk = new SqlCommand(
+                "SELECT COUNT(*) FROM Vendor_Checklist WHERE VendorCode=@vc", con))
+            {
+                chk.Parameters.AddWithValue("@vc", vc);
+                if (Convert.ToInt32(chk.ExecuteScalar()) > 0) return;
+            }
+            string ins = "INSERT INTO Vendor_Checklist(VendorCode,ItemID,IsChecked,Remarks) SELECT @vc,ItemID,0,'' FROM Vendor_Checklist_Items";
+            using (SqlCommand cmd = new SqlCommand(ins, con))
+            {
+                cmd.Parameters.AddWithValue("@vc", vc);
+                cmd.ExecuteNonQuery();
+            }
         }
-        // Insert one row per checklist item
-        string ins = "INSERT INTO Vendor_Checklist(VendorCode,ItemID,IsChecked,Remarks) SELECT @vc,ItemID,0,'' FROM Vendor_Checklist_Items";
-        using (SqlCommand cmd = new SqlCommand(ins, con))
+        catch (SqlException ex)
         {
-            cmd.Parameters.AddWithValue("@vc", vc);
-            cmd.ExecuteNonQuery();
+            ShowMsg("Database error initialising checklist: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Unexpected error initialising checklist: " + ex.Message, "error");
         }
     }
 
     private void LoadChecklistTemplate(int vc)
     {
-        if (vc > 0) { BindChecklist(vc); return; }
         try
         {
+            if (vc > 0) { BindChecklist(vc); return; }
             using (SqlConnection con = new SqlConnection(ConStr))
             {
-                string q = "SELECT 0 AS CheckID, 0 AS IsChecked, '' AS Remarks, Description, ROW_NUMBER() OVER (ORDER BY ItemID) AS RowNum FROM Vendor_Checklist_Items";
+                string q = @"SELECT 0 AS CheckID, 0 AS IsChecked, '' AS Remarks,
+                             Description, ROW_NUMBER() OVER (ORDER BY ItemID) AS RowNum
+                             FROM Vendor_Checklist_Items";
                 SqlDataAdapter da = new SqlDataAdapter(q, con);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
@@ -895,100 +1323,158 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 gvChecklist.DataBind();
             }
         }
-        catch { }
+        catch (SqlException ex)
+        {
+            ShowMsg("Database error loading checklist template: " + ex.Message, "error");
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error loading checklist template: " + ex.Message, "error");
+        }
     }
 
     private void AddAllParams(SqlCommand cmd)
     {
-        cmd.Parameters.AddWithValue("@n", txtName.Text.Trim());
-        cmd.Parameters.AddWithValue("@fl", txtFullNameLL.Text.Trim());
-        cmd.Parameters.AddWithValue("@pc", txtPrintInCheque.Text.Trim());
-        cmd.Parameters.AddWithValue("@ag", ddlAccountGroup.SelectedValue);
-        cmd.Parameters.AddWithValue("@iq", rblInvoicingQty.SelectedValue);
-        cmd.Parameters.AddWithValue("@br", ddlBranch.SelectedValue);
-        cmd.Parameters.AddWithValue("@vt", ddlVendorType.SelectedValue);
-        cmd.Parameters.AddWithValue("@orc", txtOriginCode.Text.Trim());
-        cmd.Parameters.AddWithValue("@or", txtOriginCountry.Text.Trim());
-        cmd.Parameters.AddWithValue("@st", ddlState.SelectedValue);
-        cmd.Parameters.AddWithValue("@pb", txtPOBox.Text.Trim());
-        cmd.Parameters.AddWithValue("@ad", txtAddress.Text.Trim());
-        cmd.Parameters.AddWithValue("@ci", txtCity.Text.Trim());
-        cmd.Parameters.AddWithValue("@te", txtTelephoneNo.Text.Trim());
-        cmd.Parameters.AddWithValue("@fx", txtFaxNo.Text.Trim());
-        cmd.Parameters.AddWithValue("@em", txtEmail.Text.Trim());
-        cmd.Parameters.AddWithValue("@ws", txtWebSite.Text.Trim());
-        cmd.Parameters.AddWithValue("@vr", txtVendorRemarks.Text.Trim());
-        cmd.Parameters.AddWithValue("@er", txtEvalRemarks.Text.Trim());
-        cmd.Parameters.AddWithValue("@c1n", txtCP1Name.Text.Trim());
-        cmd.Parameters.AddWithValue("@c1d", txtCP1Desig.Text.Trim());
-        cmd.Parameters.AddWithValue("@c1m", txtCP1Mobile.Text.Trim());
-        cmd.Parameters.AddWithValue("@c1e", txtCP1Email.Text.Trim());
-        cmd.Parameters.AddWithValue("@c2n", txtCP2Name.Text.Trim());
-        cmd.Parameters.AddWithValue("@c2d", txtCP2Desig.Text.Trim());
-        cmd.Parameters.AddWithValue("@c2m", txtCP2Mobile.Text.Trim());
-        cmd.Parameters.AddWithValue("@c2e", txtCP2Email.Text.Trim());
-        cmd.Parameters.AddWithValue("@bt", txtBusinessType.Text.Trim());
-        cmd.Parameters.AddWithValue("@tl", txtTradeLicenseNo.Text.Trim());
-        cmd.Parameters.AddWithValue("@ec", ddlEvalCategory.SelectedValue);
-        cmd.Parameters.AddWithValue("@ld", ParseDate(txtLicenseExpDate.Text));
-        cmd.Parameters.AddWithValue("@ed", ParseDate(txtEvalExpDate.Text));
-        cmd.Parameters.AddWithValue("@vat", txtVATRegNo.Text.Trim());
-        cmd.Parameters.AddWithValue("@trd", ParseDate(txtTRNDate.Text));
+        try
+        {
+            cmd.Parameters.AddWithValue("@n", txtName.Text.Trim());
+            cmd.Parameters.AddWithValue("@fl", txtFullNameLL.Text.Trim());
+            cmd.Parameters.AddWithValue("@pc", txtPrintInCheque.Text.Trim());
+            cmd.Parameters.AddWithValue("@ag", ddlAccountGroup.SelectedValue);
+            cmd.Parameters.AddWithValue("@iq", rblInvoicingQty.SelectedValue);
+            cmd.Parameters.AddWithValue("@br", ddlBranch.SelectedValue);
+            cmd.Parameters.AddWithValue("@vt", ddlVendorType.SelectedValue);
+            cmd.Parameters.AddWithValue("@orc", txtOriginCode.Text.Trim());
+            cmd.Parameters.AddWithValue("@or", txtOriginCountry.Text.Trim());
+            cmd.Parameters.AddWithValue("@st", ddlState.SelectedValue);
+            cmd.Parameters.AddWithValue("@pb", txtPOBox.Text.Trim());
+            cmd.Parameters.AddWithValue("@ad", txtAddress.Text.Trim());
+            cmd.Parameters.AddWithValue("@ci", txtCity.Text.Trim());
+            cmd.Parameters.AddWithValue("@te", txtTelephoneNo.Text.Trim());
+            cmd.Parameters.AddWithValue("@fx", txtFaxNo.Text.Trim());
+            cmd.Parameters.AddWithValue("@em", txtEmail.Text.Trim());
+            cmd.Parameters.AddWithValue("@ws", txtWebSite.Text.Trim());
+            cmd.Parameters.AddWithValue("@vr", txtVendorRemarks.Text.Trim());
+            cmd.Parameters.AddWithValue("@er", txtEvalRemarks.Text.Trim());
+            cmd.Parameters.AddWithValue("@c1n", txtCP1Name.Text.Trim());
+            cmd.Parameters.AddWithValue("@c1d", txtCP1Desig.Text.Trim());
+            cmd.Parameters.AddWithValue("@c1m", txtCP1Mobile.Text.Trim());
+            cmd.Parameters.AddWithValue("@c1e", txtCP1Email.Text.Trim());
+            cmd.Parameters.AddWithValue("@c2n", txtCP2Name.Text.Trim());
+            cmd.Parameters.AddWithValue("@c2d", txtCP2Desig.Text.Trim());
+            cmd.Parameters.AddWithValue("@c2m", txtCP2Mobile.Text.Trim());
+            cmd.Parameters.AddWithValue("@c2e", txtCP2Email.Text.Trim());
+            cmd.Parameters.AddWithValue("@bt", txtBusinessType.Text.Trim());
+            cmd.Parameters.AddWithValue("@tl", txtTradeLicenseNo.Text.Trim());
+            cmd.Parameters.AddWithValue("@ec", ddlEvalCategory.SelectedValue);
+            cmd.Parameters.AddWithValue("@ld", ParseDate(txtLicenseExpDate.Text));
+            cmd.Parameters.AddWithValue("@ed", ParseDate(txtEvalExpDate.Text));
+            cmd.Parameters.AddWithValue("@vat", txtVATRegNo.Text.Trim());
+            cmd.Parameters.AddWithValue("@trd", ParseDate(txtTRNDate.Text));
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error mapping form fields to SQL parameters: " + ex.Message, ex);
+        }
     }
 
     private void ClearForm()
     {
-        txtCode.Text = ""; txtName.Text = ""; txtFullNameLL.Text = "";
-        txtPrintInCheque.Text = "";
-        if (ddlAccountGroup.Items.Count > 0) ddlAccountGroup.SelectedIndex = 0;
-        rblInvoicingQty.SelectedValue = "Supplier";
-        if (ddlBranch.Items.Count > 0) ddlBranch.SelectedIndex = 0;
-        if (ddlVendorType.Items.Count > 0) ddlVendorType.SelectedIndex = 0;
-        txtOriginCode.Text = ""; txtOriginCountry.Text = "";
-        if (ddlState.Items.Count > 0) ddlState.SelectedIndex = 0;
-        txtPOBox.Text = ""; txtAddress.Text = ""; txtCity.Text = "";
-        txtTelephoneNo.Text = ""; txtFaxNo.Text = ""; txtEmail.Text = "";
-        txtWebSite.Text = ""; txtVendorRemarks.Text = ""; txtEvalRemarks.Text = "";
-        txtCP1Name.Text = ""; txtCP1Desig.Text = ""; txtCP1Mobile.Text = ""; txtCP1Email.Text = "";
-        txtCP2Name.Text = ""; txtCP2Desig.Text = ""; txtCP2Mobile.Text = ""; txtCP2Email.Text = "";
-        txtBusinessType.Text = ""; txtTradeLicenseNo.Text = "";
-        if (ddlEvalCategory.Items.Count > 0) ddlEvalCategory.SelectedIndex = 0;
-        txtLicenseExpDate.Text = ""; txtEvalExpDate.Text = ""; txtVATRegNo.Text = ""; txtTRNDate.Text = "";
-        txtVerifiedBy.Text = ""; txtVerifiedDateTime.Text = "";
-        txtApprovedBy.Text = ""; txtApprovedDateTime.Text = "";
-        // Branch mapping defaults
-        if (ddlCMPPayTerm.Items.Count > 0) { ddlCMPPayTerm.SelectedIndex = 0; ddlPRCPayTerm.SelectedIndex = 0; ddlRMCPayTerm.SelectedIndex = 0; }
-        if (ddlCMPTaxType.Items.Count > 0) { ddlCMPTaxType.SelectedIndex = 0; ddlPRCTaxType.SelectedIndex = 0; ddlRMCTaxType.SelectedIndex = 0; }
-        rblCMPCreditReq.SelectedValue = "0"; rblPRCCreditReq.SelectedValue = "0"; rblRMCCreditReq.SelectedValue = "0";
-        txtCMPCreditAmt.Text = "0"; txtPRCCreditAmt.Text = "0"; txtRMCCreditAmt.Text = "0";
-        rblCMPStatus.SelectedValue = "InActive"; rblPRCStatus.SelectedValue = "InActive"; rblRMCStatus.SelectedValue = "InActive";
-        // Clear sub grids
-        gvNameHistory.DataSource = null; gvNameHistory.DataBind();
-        gvAttachments.DataSource = null; gvAttachments.DataBind();
-        gvAudit.DataSource = null; gvAudit.DataBind();
-        hfNHSLNO.Value = "0";
-        LoadChecklistTemplate(0);
+        try
+        {
+            txtCode.Text = ""; txtName.Text = ""; txtFullNameLL.Text = "";
+            txtPrintInCheque.Text = "";
+            if (ddlAccountGroup.Items.Count > 0) ddlAccountGroup.SelectedIndex = 0;
+            try { rblInvoicingQty.SelectedValue = "Supplier"; } catch { }
+            if (ddlBranch.Items.Count > 0) ddlBranch.SelectedIndex = 0;
+            if (ddlVendorType.Items.Count > 0) ddlVendorType.SelectedIndex = 0;
+            txtOriginCode.Text = ""; txtOriginCountry.Text = "";
+            if (ddlState.Items.Count > 0) ddlState.SelectedIndex = 0;
+            txtPOBox.Text = ""; txtAddress.Text = ""; txtCity.Text = "";
+            txtTelephoneNo.Text = ""; txtFaxNo.Text = "";
+            txtEmail.Text = ""; txtWebSite.Text = "";
+            txtVendorRemarks.Text = ""; txtEvalRemarks.Text = "";
+            txtCP1Name.Text = ""; txtCP1Desig.Text = ""; txtCP1Mobile.Text = ""; txtCP1Email.Text = "";
+            txtCP2Name.Text = ""; txtCP2Desig.Text = ""; txtCP2Mobile.Text = ""; txtCP2Email.Text = "";
+            txtBusinessType.Text = ""; txtTradeLicenseNo.Text = "";
+            if (ddlEvalCategory.Items.Count > 0) ddlEvalCategory.SelectedIndex = 0;
+            txtLicenseExpDate.Text = ""; txtEvalExpDate.Text = "";
+            txtVATRegNo.Text = ""; txtTRNDate.Text = "";
+            txtVerifiedBy.Text = ""; txtVerifiedDateTime.Text = "";
+            txtApprovedBy.Text = ""; txtApprovedDateTime.Text = "";
+
+            // Branch mapping defaults
+            try
+            {
+                if (ddlCMPPayTerm.Items.Count > 0) { ddlCMPPayTerm.SelectedIndex = 0; ddlPRCPayTerm.SelectedIndex = 0; ddlRMCPayTerm.SelectedIndex = 0; }
+                if (ddlCMPTaxType.Items.Count > 0) { ddlCMPTaxType.SelectedIndex = 0; ddlPRCTaxType.SelectedIndex = 0; ddlRMCTaxType.SelectedIndex = 0; }
+                rblCMPCreditReq.SelectedValue = "0"; rblPRCCreditReq.SelectedValue = "0"; rblRMCCreditReq.SelectedValue = "0";
+                txtCMPCreditAmt.Text = "0"; txtPRCCreditAmt.Text = "0"; txtRMCCreditAmt.Text = "0";
+                rblCMPStatus.SelectedValue = "InActive"; rblPRCStatus.SelectedValue = "InActive"; rblRMCStatus.SelectedValue = "InActive";
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Warning: Could not reset branch mapping defaults: " + ex.Message, "error");
+            }
+
+            // Clear sub grids
+            try
+            {
+                gvNameHistory.DataSource = null; gvNameHistory.DataBind();
+                gvAttachments.DataSource = null; gvAttachments.DataBind();
+                gvAudit.DataSource = null; gvAudit.DataBind();
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Warning: Could not clear sub-grids: " + ex.Message, "error");
+            }
+
+            hfNHSLNO.Value = "0";
+            LoadChecklistTemplate(0);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error clearing form: " + ex.Message, "error");
+        }
     }
 
     private void SetDDL(DropDownList ddl, object val)
     {
-        if (val == null || val == DBNull.Value) return;
-        string s = val.ToString();
-        ListItem li = ddl.Items.FindByValue(s);
-        if (li != null) ddl.SelectedValue = s;
+        try
+        {
+            if (ddl == null || val == null || val == DBNull.Value) return;
+            string s = val.ToString();
+            if (string.IsNullOrEmpty(s)) return;
+            ListItem li = ddl.Items.FindByValue(s);
+            if (li != null) ddl.SelectedValue = s;
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Warning: Could not set dropdown value: " + ex.Message, "error");
+        }
     }
 
     private object ParseDate(string s)
     {
-        DateTime d;
-        if (DateTime.TryParse(s, out d)) return d;
-        return DBNull.Value;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(s)) return DBNull.Value;
+            DateTime d;
+            if (DateTime.TryParse(s, out d)) return d;
+            return DBNull.Value;
+        }
+        catch
+        {
+            return DBNull.Value;
+        }
     }
 
     private void ShowMsg(string msg, string type)
     {
+
         string safe = msg.Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
         ScriptManager.RegisterStartupScript(this, GetType(), "msg",
-           "showNotification('" + safe + "','" + type + "');", true);
+            "showNotification('" + safe + "','" + type + "');", true);
+
     }
 }
