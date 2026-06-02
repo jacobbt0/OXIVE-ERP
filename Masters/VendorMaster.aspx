@@ -4,208 +4,7 @@
 <asp:Content ID="TitleContent" ContentPlaceHolderID="PageTitle" runat="server">Vendor Master</asp:Content>
 <asp:Content ID="NavTitleContent" ContentPlaceHolderID="NavTitle" runat="server">Vendor Master</asp:Content>
 
-<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadContent" runat="server">
-<style>
-/* ---- VENDOR MASTER STYLES ---- */
-.vm-wrap { padding: 8px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; }
-
-/* TOOLBAR */
-.vm-toolbar {
-    display: flex; align-items: center; gap: 8px;
-    background: #f0f4f8; border: 1px solid #cdd5de;
-    padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; flex-wrap: wrap;
-}
-.vm-btn-add {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: #1e4d7b; color: #fff; border: none;
-    font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.vm-btn-add:hover { background: #163d63; }
-.vm-radio-group { display: flex; align-items: center; gap: 14px; font-size: 13px; }
-.vm-radio-group label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
-.vm-toolbar-sep { width: 1px; height: 24px; background: #bcc5ce; margin: 0 4px; }
-.vm-icon-btn {
-    width: 30px; height: 30px; border: 1px solid #bcc5ce; background: #fff;
-    border-radius: 3px; cursor: pointer; font-size: 14px; display: flex;
-    align-items: center; justify-content: center;
-}
-.vm-icon-btn:hover { background: #e8edf2; }
-.vm-search-top {
-    margin-left: auto; display: flex; align-items: center;
-    border: 1px solid #bcc5ce; border-radius: 3px; overflow: hidden; background:#fff;
-}
-.vm-search-top input {
-    border: none; outline: none; padding: 4px 8px; font-size: 13px; width: 220px;
-}
-.vm-search-top span { padding: 0 8px; color: #888; }
-
-/* GRID */
-.vm-grid-wrap { background: #fff; border: 1px solid #cdd5de; border-radius: 4px; overflow: auto; }
-.vm-grid { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 900px; }
-.vm-grid thead tr.hdr-main th {
-    background: linear-gradient(135deg,#1a3a5c,#1e4d7b); color:#fff;
-    padding: 8px 10px; text-align:left; white-space:nowrap;
-    border-right: 1px solid rgba(255,255,255,0.15);
-    position: relative;
-}
-.vm-grid thead tr.hdr-filter th {
-    background:#e8edf5; padding: 3px 4px;
-    border-right: 1px solid #cdd5de; border-bottom: 2px solid #1e4d7b;
-}
-.vm-grid thead tr.hdr-filter input {
-    width: 100%; border: 1px solid #bcc5ce; border-radius: 2px;
-    padding: 3px 5px; font-size: 11.5px; outline: none;
-}
-.vm-grid tbody tr { border-bottom: 1px solid #e8ecf0; }
-.vm-grid tbody tr:hover { background: #f0f6ff; }
-.vm-grid tbody tr:nth-child(even) { background: #f8fafc; }
-.vm-grid tbody tr:nth-child(even):hover { background: #e8f0f8; }
-.vm-grid td { padding: 6px 10px; vertical-align: middle; border-right: 1px solid #e8ecf0; white-space: nowrap; }
-.vm-code-link { color:#1e4d7b; font-weight:600; cursor:pointer; text-decoration:underline; border:none; background:none; }
-.vm-code-link:hover { color:#c0392b; }
-
-/* PAGINATION */
-.vm-pagination {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 10px; border-top: 1px solid #e0e5ea; background: #f8f9fa; font-size: 12.5px;
-}
-.vm-page-size { display: flex; align-items: center; gap: 6px; }
-.vm-page-size select { border: 1px solid #bcc5ce; border-radius: 3px; padding: 2px 4px; font-size: 12px; }
-.vm-page-nav { display: flex; align-items: center; gap: 4px; }
-.vm-page-nav button {
-    border: 1px solid #bcc5ce; background:#fff; padding: 2px 7px;
-    border-radius: 3px; cursor: pointer; font-size: 12px;
-}
-.vm-page-nav button:hover { background: #e8edf2; }
-.vm-page-nav button:disabled { opacity: 0.4; cursor: default; }
-.vm-page-info { font-size: 12.5px; color:#555; }
-
-/* ---- FORM PANEL ---- */
-.vm-form-panel { display: none; }
-.vm-form-panel.active { display: block; }
-.vm-list-panel { display: block; }
-.vm-list-panel.hidden { display: none; }
-
-/* TABS */
-.vm-tabs { display: flex; gap: 0; border-bottom: 2px solid #1e4d7b; margin-bottom: 0; flex-wrap: wrap; }
-.vm-tab {
-    padding: 7px 14px; cursor: pointer; font-size: 12.5px; font-weight: 600;
-    border: 1px solid #cdd5de; border-bottom: none; background: #f0f4f8;
-    color: #2c3e50; border-radius: 4px 4px 0 0; margin-right: 2px;
-    transition: background 0.2s;
-}
-.vm-tab:hover { background: #dce8f5; }
-.vm-tab.active { background: #1e4d7b; color: #fff; border-color: #1e4d7b; }
-
-/* TAB CONTENT */
-.vm-tab-content { display: none; }
-.vm-tab-content.active { display: block; }
-
-.vm-tab-body {
-    background: #fff; border: 1px solid #cdd5de; border-top: none;
-    padding: 12px; min-height: 420px;
-}
-
-/* FORM LAYOUT */
-.vm-form-row { display: flex; align-items: center; margin-bottom: 7px; gap: 6px; }
-.vm-lbl { width: 130px; min-width: 130px; font-weight: 600; color: #2c3e50; font-size: 12.5px; text-align: right; padding-right: 8px; }
-.vm-lbl-wide { width: 160px; min-width: 160px; }
-.vm-inp {
-    height: 26px; border: 1px solid #bcc5ce; border-radius: 3px;
-    padding: 2px 7px; font-size: 13px; outline: none; font-family: inherit;
-}
-.vm-inp:focus { border-color: #1e4d7b; box-shadow: 0 0 3px rgba(30,77,123,0.3); }
-.vm-inp-sm { width: 120px; }
-.vm-inp-md { width: 220px; }
-.vm-inp-lg { width: 340px; }
-.vm-inp-xl { width: 480px; }
-.vm-sel {
-    height: 26px; border: 1px solid #bcc5ce; border-radius: 3px;
-    padding: 2px 4px; font-size: 13px; outline: none; font-family: inherit; background: #fff;
-}
-.vm-sel:focus { border-color: #1e4d7b; }
-.vm-sel-md { width: 220px; }
-.vm-sel-lg { width: 340px; }
-.vm-sel-xl { width: 480px; }
-
-/* SECTION BOXES */
-.vm-section-box {
-    border: 1px solid #cdd5de; border-radius: 4px; padding: 10px 12px;
-    margin-bottom: 10px; position: relative;
-}
-.vm-section-title {
-    position: absolute; top: -10px; left: 12px;
-    background: #fff; padding: 0 6px;
-    font-weight: 700; font-size: 12px; color: #1e4d7b;
-}
-
-/* TWO-COL DETAILS LAYOUT */
-.vm-details-cols { display: flex; gap: 12px; }
-.vm-col-left { flex: 1; min-width: 0; }
-.vm-col-right { width: 340px; min-width: 300px; }
-
-/* CONTACT PERSON GRID */
-.vm-cp-table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
-.vm-cp-table th { background: #1e4d7b; color:#fff; padding: 5px 8px; font-weight: 600; }
-.vm-cp-table td { padding: 4px 4px; border-bottom: 1px solid #e8ecf0; }
-.vm-cp-table input { width: 100%; height: 24px; border: 1px solid #bcc5ce; border-radius: 2px; padding: 2px 5px; font-size: 12px; outline:none; }
-.vm-cp-table input:focus { border-color: #1e4d7b; }
-
-/* BRANCH MAPPING TABLE */
-.vm-bm-table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-.vm-bm-table th { background: #1e4d7b; color:#fff; padding: 7px 10px; font-weight:600; }
-.vm-bm-table td { padding: 5px 8px; border-bottom: 1px solid #e8ecf0; border-right: 1px solid #e8ecf0; }
-.vm-bm-table tr:nth-child(even) td { background: #f8fafc; }
-.vm-bm-table select { height: 24px; border: 1px solid #bcc5ce; border-radius: 2px; padding: 1px 4px; font-size: 12px; width: 100%; }
-.vm-bm-table input[type=number] { width: 90px; height: 24px; border: 1px solid #bcc5ce; border-radius: 2px; padding: 2px 5px; font-size: 12px; text-align: right; }
-.vm-bm-label { font-weight: 600; color: #2c3e50; }
-
-/* CHECKLIST TABLE */
-.vm-cl-table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-.vm-cl-table th { background: #1e4d7b; color:#fff; padding: 7px 10px; }
-.vm-cl-table td { padding: 5px 8px; border-bottom: 1px solid #e8ecf0; vertical-align: middle; }
-.vm-cl-table tr:nth-child(even) td { background: #f8fafc; }
-.vm-cl-table input[type=text] { width: 100%; border: 1px solid #bcc5ce; border-radius: 2px; padding: 2px 6px; font-size: 12px; outline:none; }
-
-/* SUB-GRID (name history, attachments, audit) */
-.vm-sub-grid { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 600px; }
-.vm-sub-grid th { background: linear-gradient(135deg,#1a3a5c,#1e4d7b); color:#fff; padding: 7px 10px; text-align:left; }
-.vm-sub-grid td { padding: 6px 10px; border-bottom: 1px solid #e8ecf0; vertical-align:middle; }
-.vm-sub-grid tr:hover td { background: #f0f6ff; }
-.vm-sub-grid tr:nth-child(even) td { background: #f8fafc; }
-.vm-sub-grid tr:nth-child(even):hover td { background: #e8f0f8; }
-.vm-sub-grid-wrap { overflow: auto; border: 1px solid #cdd5de; border-radius: 4px; }
-
-/* BOTTOM BAR */
-.vm-bottom-bar {
-    display: flex; align-items: center; gap: 10px;
-    border-top: 2px solid #e0e5ea; padding: 8px 12px;
-    background: #f8f9fa; margin-top: 8px; flex-wrap: wrap;
-}
-.vm-audit-field { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-.vm-audit-field label { font-weight: 600; color: #555; white-space: nowrap; }
-.vm-audit-field input { height: 24px; width: 150px; border: 1px solid #bcc5ce; border-radius: 3px; padding: 2px 6px; font-size: 12px; background: #f0f0f0; }
-.vm-bottom-btns { margin-left: auto; display: flex; gap: 6px; }
-.vm-btn {
-    padding: 6px 18px; border: none; border-radius: 4px; font-size: 13px;
-    font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px;
-}
-.vm-btn:hover { opacity: 0.88; }
-.vm-btn-clear { background: #6c757d; color:#fff; }
-.vm-btn-save  { background: #1e4d7b; color:#fff; }
-.vm-btn-update{ background: #17a2b8; color:#fff; }
-.vm-btn-print { background: #28a745; color:#fff; }
-.vm-btn-del   { background: #c0392b; color:#fff; }
-.vm-btn-sm { padding: 4px 12px; font-size: 12px; }
-
-/* ATTACHMENT */
-.vm-attach-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.vm-file-note { color: #c0392b; font-weight: 700; font-size: 12px; }
-
-/* BANK placeholder */
-.vm-bank-placeholder { padding: 40px; text-align: center; color: #888; font-size: 14px; }
-</style>
-</asp:Content>
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadContent" runat="server"></asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
 <div class="vm-wrap">
@@ -320,7 +119,7 @@
     <!-- TABS -->
     <div class="vm-tabs">
         <div class="vm-tab active" id="tab-details"          onclick="switchTab('tab-details')">Details</div>
-        <div class="vm-tab"        id="tab-bank"             onclick="switchTab('tab-bank')">Bank Details</div>
+        <div class="vm-tab vm-tab-disabled"        id="tab-bank">Bank Details</div>
         <div class="vm-tab"        id="tab-namehistory"      onclick="switchTab('tab-namehistory')">Name History</div>
         <div class="vm-tab"        id="tab-attachments"      onclick="switchTab('tab-attachments')">Attachment Details</div>
         <div class="vm-tab"        id="tab-branchmapping"    onclick="switchTab('tab-branchmapping')">Vendor Branch Mapping</div>
@@ -329,7 +128,7 @@
     </div>
 
     <!-- ===== TAB: DETAILS ===== -->
-    <div class="vm-tab-body">
+  <div class="vm-tab-body">
     <div id="tc-tab-details" class="vm-tab-content active">
 
         <!-- Code / Name row -->
@@ -540,11 +339,7 @@
 
     <!-- ===== TAB: BANK DETAILS ===== -->
     <div id="tc-tab-bank" class="vm-tab-content">
-        <div class="vm-bank-placeholder">
-            <div style="font-size:36px;">&#127968;</div>
-            <div style="margin-top:10px; font-weight:600; color:#1e4d7b;">Bank Details</div>
-            <div style="margin-top:6px; color:#aaa;">Bank details section — coming soon.</div>
-        </div>
+        
     </div>
 
     <!-- ===== TAB: NAME HISTORY ===== -->
@@ -638,16 +433,29 @@
                 <tr>
                     <td class="vm-bm-label" style="text-align:center;">1</td>
                     <td class="vm-bm-label">Payment Terms</td>
-                    <td><asp:DropDownList ID="ddlCMPPayTerm" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">0</asp:ListItem></asp:DropDownList></td>
-                    <td><asp:DropDownList ID="ddlPRCPayTerm" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">0</asp:ListItem></asp:DropDownList></td>
-                    <td><asp:DropDownList ID="ddlRMCPayTerm" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">0</asp:ListItem></asp:DropDownList></td>
+                    <td><asp:DropDownList ID="ddlCMPPayTerm" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="0">0</asp:ListItem></asp:DropDownList></td>
+                    <td><asp:DropDownList ID="ddlPRCPayTerm" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="0">0</asp:ListItem></asp:DropDownList></td>
+                    <td>
+                        <asp:DropDownList ID="ddlRMCPayTerm" runat="server" CssClass="vm-sel" style="width:100%;">
+                            <asp:ListItem Value="0">0</asp:ListItem>
+                            <asp:ListItem Value="120 DAYS">120 DAYS</asp:ListItem>
+                            <asp:ListItem Value="120 DAYS CDS">120 DAYS CDS</asp:ListItem>
+                        </asp:DropDownList>
+
+                    </td>
                 </tr>
                 <tr>
                     <td class="vm-bm-label" style="text-align:center;">2</td>
                     <td class="vm-bm-label">Tax Type</td>
                     <td><asp:DropDownList ID="ddlCMPTaxType" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">STANDARD RATE</asp:ListItem></asp:DropDownList></td>
                     <td><asp:DropDownList ID="ddlPRCTaxType" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">STANDARD RATE</asp:ListItem></asp:DropDownList></td>
-                    <td><asp:DropDownList ID="ddlRMCTaxType" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">STANDARD RATE</asp:ListItem></asp:DropDownList></td>
+                    <td>
+                        <asp:DropDownList ID="ddlRMCTaxType" runat="server" CssClass="vm-sel" style="width:100%;">
+                            <asp:ListItem Value="STANDARD RATE">STANDARD RATE</asp:ListItem>
+                            <asp:ListItem Value="Zero rated">Zero rated</asp:ListItem>
+                            <asp:ListItem Value="Intra GCC">Intra GCC</asp:ListItem>
+                        </asp:DropDownList>
+                    </td>
                 </tr>
                 <tr>
                     <td class="vm-bm-label" style="text-align:center;">3</td>
@@ -756,7 +564,6 @@
             <asp:Button ID="btnClear"  runat="server" Text="Clear"  CssClass="vm-btn vm-btn-clear"  OnClick="btnClear_Click" />
             <asp:Button ID="btnSave"   runat="server" Text="&#128190; Save"   CssClass="vm-btn vm-btn-save"   OnClick="btnSave_Click" />
             <asp:Button ID="btnUpdate" runat="server" Text="&#128228; Update" CssClass="vm-btn vm-btn-update" OnClick="btnUpdate_Click" />
-            <asp:Button ID="btnPrint"  runat="server" Text="&#128438; Print"  CssClass="vm-btn vm-btn-print"  OnClick="btnPrint_Click" />
             <asp:Button ID="btnDelete" runat="server" Text="Delete" CssClass="vm-btn vm-btn-del" OnClick="btnDelete_Click"
                 OnClientClick="return confirm('Delete this vendor?');" />
             <asp:Button ID="btnBackToList" runat="server" Text="&#8592; List" CssClass="vm-btn vm-btn-clear" OnClick="btnBackToList_Click" />

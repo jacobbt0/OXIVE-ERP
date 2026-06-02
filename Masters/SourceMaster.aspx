@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site.Master"
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Masters/MastersSite.master"
     AutoEventWireup="true"
     CodeFile="SourceMaster.aspx.cs"
     Inherits="Masters_SourceMaster" %>

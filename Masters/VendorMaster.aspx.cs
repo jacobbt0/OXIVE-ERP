@@ -13,9 +13,8 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
 {
     string ConStr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
 
-    // =============================================
     // PAGE LOAD
-    // =============================================
+    
     protected void Page_Load(object sender, EventArgs e)
     {
         try
@@ -69,9 +68,8 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
     // GRID DATA
-    // =============================================
+    
     private void BindGridData()
     {
         try
@@ -121,9 +119,9 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
+
     // ADD NEW
-    // =============================================
+
     protected void btnAddNew_Click(object sender, EventArgs e)
     {
         try
@@ -141,9 +139,8 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
     // BACK TO LIST
-    // =============================================
+
     protected void btnBackToList_Click(object sender, EventArgs e)
     {
         try
@@ -166,9 +163,9 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
+    
     // RADIO FILTER CHANGED
-    // =============================================
+
     protected void rbFilter_Changed(object sender, EventArgs e)
     {
         try
@@ -183,9 +180,9 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
+    
     // SEARCH CODE BUTTON
-    // =============================================
+    
     protected void btnSearchCode_Click(object sender, EventArgs e)
     {
         try
@@ -214,9 +211,8 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
     // SAVE
-    // =============================================
+
     protected void btnSave_Click(object sender, EventArgs e)
     {
         try
@@ -315,9 +311,9 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
+   
     // UPDATE
-    // =============================================
+
     protected void btnUpdate_Click(object sender, EventArgs e)
     {
         try
@@ -413,9 +409,9 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    // =============================================
+    
     // DELETE
-    // =============================================
+  
     protected void btnDelete_Click(object sender, EventArgs e)
     {
         try
@@ -429,7 +425,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
 
             using (SqlConnection con = new SqlConnection(ConStr))
             {
-                string q = "UPDATE Vendor_Master SET IsDeleted=1 WHERE VendorCode=@vc";
+                string q = "DELETE FROM Vendor_Master WHERE VendorCode=@vc";
                 using (SqlCommand cmd = new SqlCommand(q, con))
                 {
                     cmd.Parameters.AddWithValue("@vc", vendorCode);
