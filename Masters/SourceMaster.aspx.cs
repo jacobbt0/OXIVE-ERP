@@ -67,6 +67,13 @@ public partial class Masters_SourceMaster : System.Web.UI.Page
             {
                 con.Open();
 
+                if (string.IsNullOrWhiteSpace(txtDescription.Text))
+                {
+                    ShowMessage("Please enter Source Description.");
+                    txtDescription.Focus();
+                    return;
+                }
+
                 // DUPLICATE CHECK
                 string checkQuery =
                     @"SELECT COUNT(*)

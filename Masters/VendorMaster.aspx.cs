@@ -1,9 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -14,7 +17,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     string ConStr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
 
     // PAGE LOAD
-    
+
     protected void Page_Load(object sender, EventArgs e)
     {
         try
@@ -38,7 +41,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                         hfView.Value = "form";
                         LoadVendor(vendorCode);
                         BindSubTabs(vendorCode);
-                        ScriptManager.RegisterStartupScript(this, GetType(), "view",
+                        Page.ClientScript.RegisterStartupScript(GetType(), "view",
                             "applyView(); restoreTab();", true);
                     }
                     else
@@ -48,17 +51,11 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
                 }
                 else
                 {
+                    // Bind grid data on every postback so it stays current.
+                    // Do NOT register a "view" script here — each button handler
+                    // owns its own navigation script to avoid first-write-wins
+                    // collision with Page.ClientScript (duplicate keys are silently dropped).
                     BindGridData();
-                    if (hfView.Value == "form")
-                    {
-                        ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                            "applyView(); restoreTab();", true);
-                    }
-                    else
-                    {
-                        ScriptManager.RegisterStartupScript(this, GetType(), "view",
-                            "applyView(); renderGrid();", true);
-                    }
                 }
             }
         }
@@ -69,7 +66,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     }
 
     // GRID DATA
-    
+
     private void BindGridData()
     {
         try
@@ -130,7 +127,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             hfView.Value = "form";
             hfVendorCode.Value = "0";
             LoadChecklistTemplate(0);
-            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
                 "applyView(); switchTab('tab-details');", true);
         }
         catch (Exception ex)
@@ -154,7 +151,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             hfView.Value = "list";
             ClearForm();
             BindGridData();
-            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
                 "applyView(); renderGrid();", true);
         }
         catch (Exception ex)
@@ -163,7 +160,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    
+
     // RADIO FILTER CHANGED
 
     protected void rbFilter_Changed(object sender, EventArgs e)
@@ -171,7 +168,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         try
         {
             BindGridData();
-            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
                 "applyView(); renderGrid();", true);
         }
         catch (Exception ex)
@@ -180,9 +177,31 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    
+
     // SEARCH CODE BUTTON
-    
+
+    protected void btnPopupSelect_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            int vc;
+            if (!int.TryParse(hfVendorCode.Value, out vc) || vc == 0)
+            {
+                ShowMsg("Invalid vendor selection.", "error");
+                return;
+            }
+            LoadVendor(vc);
+            BindSubTabs(vc);
+            hfView.Value = "form";
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
+                "applyView(); switchTab('tab-details');", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg("Error loading vendor: " + ex.Message, "error");
+        }
+    }
+
     protected void btnSearchCode_Click(object sender, EventArgs e)
     {
         try
@@ -202,7 +221,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             LoadVendor(vc);
             BindSubTabs(vc);
             hfView.Value = "form";
-            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
                 "applyView(); switchTab('tab-details');", true);
         }
         catch (Exception ex)
@@ -311,7 +330,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-   
+
     // UPDATE
 
     protected void btnUpdate_Click(object sender, EventArgs e)
@@ -409,9 +428,9 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         }
     }
 
-    
+
     // DELETE
-  
+
     protected void btnDelete_Click(object sender, EventArgs e)
     {
         try
@@ -443,7 +462,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             ClearForm();
             hfView.Value = "list";
             BindGridData();
-            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
                 "applyView(); renderGrid();", true);
         }
         catch (SqlException ex)
@@ -465,7 +484,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
         {
             ClearForm();
             hfVendorCode.Value = "0";
-            ScriptManager.RegisterStartupScript(this, GetType(), "view",
+            Page.ClientScript.RegisterStartupScript(GetType(), "view",
                 "switchTab('tab-details');", true);
         }
         catch (Exception ex)
@@ -481,7 +500,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
     {
         try
         {
-            ScriptManager.RegisterStartupScript(this, GetType(), "prnt", "window.print();", true);
+            Page.ClientScript.RegisterStartupScript(GetType(), "prnt", "window.print();", true);
         }
         catch (Exception ex)
         {
@@ -627,7 +646,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             ShowMsg("Unexpected error saving name history: " + ex.Message, "error");
         }
 
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+        Page.ClientScript.RegisterStartupScript(GetType(), "tab",
             "applyView(); switchTab('tab-namehistory');", true);
     }
 
@@ -711,7 +730,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             ShowMsg("Unexpected error in name history: " + ex.Message, "error");
         }
 
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+        Page.ClientScript.RegisterStartupScript(GetType(), "tab",
             "applyView(); switchTab('tab-namehistory');", true);
     }
 
@@ -797,7 +816,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             ShowMsg("Unexpected error uploading file: " + ex.Message, "error");
         }
 
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+        Page.ClientScript.RegisterStartupScript(GetType(), "tab",
             "applyView(); switchTab('tab-attachments');", true);
     }
 
@@ -887,26 +906,99 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             ShowMsg("Unexpected error processing attachment: " + ex.Message, "error");
         }
 
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+        Page.ClientScript.RegisterStartupScript(GetType(), "tab",
             "applyView(); switchTab('tab-attachments');", true);
     }
 
     // =============================================
     // VIEW / DOWNLOAD ATTACHMENT
     // =============================================
+
     protected void btnViewDownload_Click(object sender, EventArgs e)
     {
         try
         {
-            ShowMsg("Select a file row in the grid to download.", "success");
+            int vendorCode;
+            if (!int.TryParse(hfVendorCode.Value, out vendorCode) || vendorCode == 0)
+            {
+                ShowMsg("Please select a vendor.", "error");
+                return;
+            }
+
+            // Collect selected attachment IDs
+            List<int> selectedAttachIds = new List<int>();
+            foreach (GridViewRow row in gvAttachments.Rows)
+            {
+                CheckBox chkSelect = (CheckBox)row.FindControl("chkSelect");
+                if (chkSelect != null && chkSelect.Checked)
+                {
+                    int attachId = Convert.ToInt32(gvAttachments.DataKeys[row.RowIndex].Value);
+                    selectedAttachIds.Add(attachId);
+                }
+            }
+
+            if (selectedAttachIds.Count == 0)
+            {
+                ShowMsg("Please select at least one file to download.", "error");
+                return;
+            }
+
+            if (selectedAttachIds.Count > 1)
+            {
+                ShowMsg("Please select only one file at a time. Multiple file download is not supported in this version.", "error");
+                return;
+            }
+
+            // Get file path for the single selected attachment
+            string filePath = "";
+            using (SqlConnection con = new SqlConnection(ConStr))
+            {
+                string q = "SELECT FilePath FROM Vendor_Attachments WHERE AttachID = @id AND VendorCode = @vc";
+                using (SqlCommand cmd = new SqlCommand(q, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", selectedAttachIds[0]);
+                    cmd.Parameters.AddWithValue("@vc", vendorCode);
+                    con.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null)
+                        filePath = result.ToString();
+                }
+            }
+
+            if (string.IsNullOrEmpty(filePath))
+            {
+                ShowMsg("File not found in database.", "error");
+                return;
+            }
+
+            string physicalPath = Server.MapPath(filePath);
+            if (!File.Exists(physicalPath))
+            {
+                ShowMsg("File not found on server.", "error");
+                return;
+            }
+
+            // Download the file
+            Response.Clear();
+            Response.ContentType = "application/octet-stream";
+            Response.AppendHeader("Content-Disposition", "attachment; filename=\"" + Path.GetFileName(physicalPath) + "\"");
+            Response.TransmitFile(physicalPath);
+            Response.Flush();
+            Response.End();
+        }
+        catch (System.Threading.ThreadAbortException)
+        {
+            // Expected when Response.End() is called
         }
         catch (Exception ex)
         {
-            ShowMsg("Error: " + ex.Message, "error");
+            ShowMsg("Error downloading file: " + ex.Message, "error");
         }
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
-            "applyView(); switchTab('tab-attachments');", true);
     }
+
+
+
+
 
     // =============================================
     // CHECKLIST SAVE
@@ -970,7 +1062,7 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
             ShowMsg("Unexpected error saving checklist: " + ex.Message, "error");
         }
 
-        ScriptManager.RegisterStartupScript(this, GetType(), "tab",
+        Page.ClientScript.RegisterStartupScript(GetType(), "tab",
             "applyView(); switchTab('tab-checklist');", true);
     }
 
@@ -1467,10 +1559,16 @@ public partial class Masters_VendorMaster : System.Web.UI.Page
 
     private void ShowMsg(string msg, string type)
     {
+        // Escape for JS string literal
+        string safe = msg.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
 
-        string safe = msg.Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
-        ScriptManager.RegisterStartupScript(this, GetType(), "msg",
-            "showNotification('" + safe + "','" + type + "');", true);
-
+        // Use Page.ClientScript so it works with or without a ScriptManager control,
+        // and does not conflict with ScriptManager-keyed view/tab scripts.
+        Page.ClientScript.RegisterStartupScript(
+            GetType(),
+            "msg_" + Guid.NewGuid().ToString("N"),
+            "alert('" + safe + "','" + type + "');",
+            true
+        );
     }
 }

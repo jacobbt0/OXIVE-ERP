@@ -77,6 +77,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\Site.css" />
+    <Content Include="Masters\EmployeeMaster.aspx" />
+    <Content Include="Masters\EmployeeMasterUpload.aspx" />
     <Content Include="Masters\SourceMaster.aspx" />
     <Content Include="Masters\VendorMaster.aspx" />
     <Content Include="Masters\WeightBridgePartyMaster.aspx" />
@@ -86,6 +88,20 @@
     <Compile Include="Default.aspx.cs">
       <DependentUpon>Default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Masters\EmployeeMaster.aspx.cs">
+      <DependentUpon>EmployeeMaster.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Masters\EmployeeMaster.aspx.designer.cs">
+      <DependentUpon>EmployeeMaster.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Masters\EmployeeMasterUpload.aspx.cs">
+      <DependentUpon>EmployeeMasterUpload.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Masters\EmployeeMasterUpload.aspx.designer.cs">
+      <DependentUpon>EmployeeMasterUpload.aspx</DependentUpon>
     </Compile>
     <Compile Include="Masters\SourceMaster.aspx.cs">
       <DependentUpon>SourceMaster.aspx</DependentUpon>

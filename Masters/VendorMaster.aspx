@@ -4,7 +4,32 @@
 <asp:Content ID="TitleContent" ContentPlaceHolderID="PageTitle" runat="server">Vendor Master</asp:Content>
 <asp:Content ID="NavTitleContent" ContentPlaceHolderID="NavTitle" runat="server">Vendor Master</asp:Content>
 
-<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadContent" runat="server"></asp:Content>
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadContent" runat="server">
+<style>
+    #vmToast{display:none;position:fixed;bottom:28px;right:28px;min-width:260px;max-width:420px;
+        padding:13px 18px;border-radius:6px;font-size:13.5px;font-family:inherit;
+        box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:99999;line-height:1.45;
+        word-break:break-word;opacity:1;transition:opacity .3s;}
+</style>
+<script type="text/javascript">
+    var _toastTimer = null;
+    function showToast(msg, type) {
+        var el = document.getElementById('vmToast');
+        if (!el) { alert(msg); return; }
+        clearTimeout(_toastTimer);
+        el.style.opacity = '1';
+        el.style.display = 'block';
+        el.style.background = (type === 'success') ? '#2e7d32' : '#c62828';
+        el.style.color = '#fff';
+        el.style.borderLeft = '5px solid ' + ((type === 'success') ? '#1b5e20' : '#7f0000');
+        el.innerHTML = (type === 'success' ? '&#10003; ' : '&#9888; ') + msg;
+        _toastTimer = setTimeout(function () {
+            el.style.opacity = '0';
+            setTimeout(function () { el.style.display = 'none'; el.style.opacity = '1'; }, 320);
+        }, 5000);
+    }
+</script>
+</asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
 <div class="vm-wrap">
@@ -17,6 +42,9 @@
 <asp:HiddenField ID="hfPageIndex"    runat="server" Value="0" />
 <asp:HiddenField ID="hfPageSize"     runat="server" Value="5" />
 <asp:HiddenField ID="hfNHSLNO"      runat="server" Value="0" />
+<asp:Button ID="btnPopupSelect" runat="server" Text="" 
+    Style="display:none;" 
+    OnClick="btnPopupSelect_Click" />
 
 <!-- ===================== LIST PANEL ===================== -->
 <div class="vm-list-panel" id="divListPanel">
@@ -140,7 +168,7 @@
                 <asp:ListItem Value="ACTIVE">ACTIVE</asp:ListItem>
                 <asp:ListItem Value="IN ACTIVE">IN ACTIVE</asp:ListItem>
             </asp:DropDownList>
-            <asp:Button ID="btnSearchCode" runat="server" Text="&#128269; Search" CssClass="vm-btn vm-btn-save vm-btn-sm" OnClick="btnSearchCode_Click" />
+            <asp:Button ID="btnSearchCode" runat="server" Text="&#128269; Search" CssClass="vm-btn vm-btn-save vm-btn-sm" />
             <asp:CheckBox ID="chkWithBalance" runat="server" Text="With Balance" />
             <span style="margin-left:auto; font-size:12px; color:#555;">
                 History Name Search &nbsp;<button type="button" class="vm-icon-btn" style="width:22px;height:22px;font-size:12px;">&#128269;</button>
@@ -150,6 +178,46 @@
             <span class="vm-lbl">Name:</span>
             <asp:TextBox ID="txtName" runat="server" CssClass="vm-inp vm-inp-xl" />
         </div>
+
+        <!-- ===================== VENDOR SEARCH POPUP ===================== -->
+<div id="vmSearchOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.28);
+                width:min(820px,95vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:12px 16px;background:#1565c0;color:#fff;border-radius:8px 8px 0 0;">
+            <span style="font-weight:700;font-size:14px;">&#128269; Select Vendor</span>
+            <button onclick="closeVMSearch()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <!-- Search bar -->
+        <div style="padding:10px 16px;border-bottom:1px solid #e0e0e0;">
+            <input id="vmPopupSearch" type="text" placeholder="Type to filter by Code, Name, Phone, Type, Status..."
+                   oninput="vmPopupFilter(this.value)"
+                   style="width:100%;padding:7px 10px;border:1px solid #bdbdbd;border-radius:4px;
+                          font-size:13px;box-sizing:border-box;" />
+        </div>
+        <!-- Grid -->
+        <div style="overflow:auto;flex:1;">
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+                <thead>
+                    <tr style="background:#e3f2fd;position:sticky;top:0;z-index:1;">
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;white-space:nowrap;">Code</th>
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;">Name</th>
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;white-space:nowrap;">Phone</th>
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;white-space:nowrap;">Vendor Type</th>
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;white-space:nowrap;">Status</th>
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;">Address</th>
+                        <th style="padding:7px 10px;text-align:left;border-bottom:2px solid #90caf9;white-space:nowrap;">VAT Reg No</th>
+                    </tr>
+                </thead>
+                <tbody id="vmPopupBody"></tbody>
+            </table>
+        </div>
+        <!-- Footer -->
+        <div id="vmPopupCount" style="padding:7px 16px;border-top:1px solid #e0e0e0;
+                                      font-size:12px;color:#757575;text-align:right;"></div>
+    </div>
+</div>
 
         <div class="vm-details-cols">
             <!-- LEFT COLUMN -->
@@ -364,7 +432,6 @@
                     <asp:BoundField DataField="SLNO"          HeaderText="SL NO" />
                     <asp:BoundField DataField="VendorCode"    HeaderText="Code" />
                     <asp:BoundField DataField="HistoryName"   HeaderText="History Name" />
-                    <asp:BoundField DataField="HistoryFullName" HeaderText="History Full Name" />
                     <asp:BoundField DataField="CHQHistoryName" HeaderText="CHQ History Name" />
                     <asp:BoundField DataField="ChangeDate"    HeaderText="Change Date" DataFormatString="{0:dd/MM/yyyy}" />
                     <asp:TemplateField HeaderText="Edit">
@@ -382,40 +449,147 @@
     </div>
 
     <!-- ===== TAB: ATTACHMENT DETAILS ===== -->
-    <div id="tc-tab-attachments" class="vm-tab-content">
-        <div class="vm-attach-bar">
-            <span class="vm-lbl">Remarks:</span>
-            <asp:TextBox ID="txtAttachRemarks" runat="server" CssClass="vm-inp vm-inp-lg" TextMode="MultiLine" Rows="2" style="height:42px;" />
-            <span class="vm-file-note">*Maximum Size: 3MB</span>
-            <asp:FileUpload ID="fuAttach" runat="server" />
-            <asp:Button ID="btnUpload" runat="server" Text="UpLoad" CssClass="vm-btn vm-btn-save vm-btn-sm" OnClick="btnUpload_Click" />
-        </div>
-        <div class="vm-section-box" style="padding:8px;">
-            <span class="vm-section-title">Attaching Files</span>
-            <div class="vm-sub-grid-wrap">
-                <asp:GridView ID="gvAttachments" runat="server" AutoGenerateColumns="false"
-                    CssClass="vm-sub-grid" DataKeyNames="AttachID"
-                    OnRowCommand="gvAttachments_RowCommand">
-                    <Columns>
-                        <asp:BoundField DataField="AttachID"   HeaderText="#" />
-                        <asp:BoundField DataField="VendorCode" HeaderText="Vendor ID" />
-                        <asp:BoundField DataField="Remarks"    HeaderText="Remarks" />
-                        <asp:BoundField DataField="FilePath"   HeaderText="File Path" />
-                        <asp:TemplateField HeaderText="">
-                            <ItemTemplate>
-                                <asp:Button ID="btnAttDel" runat="server" Text="Delete" CssClass="vm-btn vm-btn-del vm-btn-sm"
-                                    CommandName="DeleteAtt" CommandArgument='<%# Eval("AttachID") %>'
-                                    OnClientClick="return confirm('Delete this attachment?');" />
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                    </Columns>
-                </asp:GridView>
-            </div>
-        </div>
-        <div style="margin-top:8px; text-align:center;">
-            <asp:Button ID="btnViewDownload" runat="server" Text="View/DownLoad" CssClass="vm-btn vm-btn-update" OnClick="btnViewDownload_Click" />
-        </div>
-    </div>
+     <div id="tc-tab-attachments" class="vm-tab-content">
+     <div class="vm-attach-bar">
+         <span class="vm-lbl">Remarks:</span>
+         <asp:TextBox ID="txtAttachRemarks" runat="server" CssClass="vm-inp vm-inp-lg" TextMode="MultiLine" Rows="2" style="height:42px;" />
+         <span class="vm-file-note">*Maximum Size: 3MB</span>
+         <asp:FileUpload ID="fuAttach" runat="server" />
+         <asp:Button ID="btnUpload" runat="server" Text="UpLoad" CssClass="vm-btn vm-btn-save vm-btn-sm" OnClick="btnUpload_Click" />
+     </div>
+     <div class="vm-section-box" style="padding:8px;">
+         <span class="vm-section-title">Attaching Files</span>
+         <div class="vm-sub-grid-wrap">
+            
+    
+            <asp:GridView ID="gvAttachments" runat="server"
+    AutoGenerateColumns="false"
+    CssClass="vm-sub-grid"
+    DataKeyNames="AttachID"
+    OnRowCommand="gvAttachments_RowCommand">
+
+    <Columns>
+        <asp:TemplateField HeaderText="">
+         
+            <ItemTemplate>
+                <asp:CheckBox ID="chkSelect" runat="server" />
+            </ItemTemplate>
+        </asp:TemplateField>
+
+        <asp:BoundField DataField="AttachID" HeaderText="#" />
+        <asp:BoundField DataField="VendorCode" HeaderText="Vendor ID" />
+        <asp:BoundField DataField="Remarks" HeaderText="Remarks" />
+        <asp:BoundField DataField="FilePath" HeaderText="File Path" />
+
+        <asp:TemplateField HeaderText="">
+            <ItemTemplate>
+                <asp:Button ID="btnAttDel" runat="server"
+                    Text="Delete"
+                    CssClass="vm-btn vm-btn-del vm-btn-sm"
+                    CommandName="DeleteAtt"
+                    CommandArgument='<%# Eval("AttachID") %>'
+                    OnClientClick="return confirm('Delete this attachment?');" />
+            </ItemTemplate>
+        </asp:TemplateField>
+    </Columns>
+</asp:GridView>
+
+
+         </div>
+     </div>
+     <div style="margin-top:8px; text-align:center;">
+         <asp:Button ID="btnViewDownload" runat="server" Text="View/DownLoad" CssClass="vm-btn vm-btn-update" OnClick="btnViewDownload_Click" />
+     </div>
+ </div>
+
+ <!-- ===== TAB: VENDOR BRANCH MAPPING ===== -->
+ <div id="tc-tab-branchmapping" class="vm-tab-content">
+     <table class="vm-bm-table" style="width:100%;">
+         <thead>
+             <tr>
+                 <th style="width:30px;"></th>
+                 <th style="width:160px;">Label Name</th>
+                 <th>CMP</th>
+                 <th>PRC</th>
+                 <th>RMC</th>
+             </tr>
+         </thead>
+         <tbody>
+             <tr>
+                 <td class="vm-bm-label" style="text-align:center;">1</td>
+                 <td class="vm-bm-label">Payment Terms</td>
+                 <td><asp:DropDownList ID="DropDownList1" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="0">0</asp:ListItem></asp:DropDownList></td>
+                 <td><asp:DropDownList ID="DropDownList2" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="0">0</asp:ListItem></asp:DropDownList></td>
+                 <td>
+                     <asp:DropDownList ID="DropDownList3" runat="server" CssClass="vm-sel" style="width:100%;">
+                         <asp:ListItem Value="0">0</asp:ListItem>
+                         <asp:ListItem Value="120 DAYS">120 DAYS</asp:ListItem>
+                         <asp:ListItem Value="120 DAYS CDS">120 DAYS CDS</asp:ListItem>
+                     </asp:DropDownList>
+
+                 </td>
+             </tr>
+             <tr>
+                 <td class="vm-bm-label" style="text-align:center;">2</td>
+                 <td class="vm-bm-label">Tax Type</td>
+                 <td><asp:DropDownList ID="DropDownList4" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">STANDARD RATE</asp:ListItem></asp:DropDownList></td>
+                 <td><asp:DropDownList ID="DropDownList5" runat="server" CssClass="vm-sel" style="width:100%;"><asp:ListItem Value="">STANDARD RATE</asp:ListItem></asp:DropDownList></td>
+                 <td>
+                     <asp:DropDownList ID="DropDownList6" runat="server" CssClass="vm-sel" style="width:100%;">
+                         <asp:ListItem Value="STANDARD RATE">STANDARD RATE</asp:ListItem>
+                         <asp:ListItem Value="Zero rated">Zero rated</asp:ListItem>
+                         <asp:ListItem Value="Intra GCC">Intra GCC</asp:ListItem>
+                     </asp:DropDownList>
+                 </td>
+             </tr>
+             <tr>
+                 <td class="vm-bm-label" style="text-align:center;">3</td>
+                 <td class="vm-bm-label">Credit Limit Required</td>
+                 <td>
+                     <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal" Font-Size="12px">
+                         <asp:ListItem Text="Yes" Value="1" /><asp:ListItem Text="No" Value="0" Selected="True" />
+                     </asp:RadioButtonList>
+                 </td>
+                 <td>
+                     <asp:RadioButtonList ID="RadioButtonList2" runat="server" RepeatDirection="Horizontal" Font-Size="12px">
+                         <asp:ListItem Text="Yes" Value="1" /><asp:ListItem Text="No" Value="0" Selected="True" />
+                     </asp:RadioButtonList>
+                 </td>
+                 <td>
+                     <asp:RadioButtonList ID="RadioButtonList3" runat="server" RepeatDirection="Horizontal" Font-Size="12px">
+                         <asp:ListItem Text="Yes" Value="1" /><asp:ListItem Text="No" Value="0" Selected="True" />
+                     </asp:RadioButtonList>
+                 </td>
+             </tr>
+             <tr>
+                 <td class="vm-bm-label" style="text-align:center;">4</td>
+                 <td class="vm-bm-label">Credit Limit Amount</td>
+                 <td><asp:TextBox ID="TextBox1" runat="server" CssClass="vm-inp" style="width:90px;text-align:right;" Text="0" /></td>
+                 <td><asp:TextBox ID="TextBox2" runat="server" CssClass="vm-inp" style="width:90px;text-align:right;" Text="0" /></td>
+                 <td><asp:TextBox ID="TextBox3" runat="server" CssClass="vm-inp" style="width:90px;text-align:right;" Text="0" /></td>
+             </tr>
+             <tr>
+                 <td class="vm-bm-label" style="text-align:center;">5</td>
+                 <td class="vm-bm-label">Vendor Status</td>
+                 <td>
+                     <asp:RadioButtonList ID="RadioButtonList4" runat="server" RepeatDirection="Horizontal" Font-Size="12px">
+                         <asp:ListItem Text="Active" Value="Active" /><asp:ListItem Text="InActive" Value="InActive" Selected="True" />
+                     </asp:RadioButtonList>
+                 </td>
+                 <td>
+                     <asp:RadioButtonList ID="RadioButtonList5" runat="server" RepeatDirection="Horizontal" Font-Size="12px">
+                         <asp:ListItem Text="Active" Value="Active" /><asp:ListItem Text="InActive" Value="InActive" Selected="True" />
+                     </asp:RadioButtonList>
+                 </td>
+                 <td>
+                     <asp:RadioButtonList ID="RadioButtonList6" runat="server" RepeatDirection="Horizontal" Font-Size="12px">
+                         <asp:ListItem Text="Active" Value="Active" /><asp:ListItem Text="InActive" Value="InActive" Selected="True" />
+                     </asp:RadioButtonList>
+                 </td>
+             </tr>
+         </tbody>
+     </table>
+ </div>
 
     <!-- ===== TAB: VENDOR BRANCH MAPPING ===== -->
     <div id="tc-tab-branchmapping" class="vm-tab-content">
@@ -572,6 +746,8 @@
 
 </div><!-- /form panel -->
 
+<div id="vmToast"></div>
+
 </div><!-- /vm-wrap -->
 </asp:Content>
 
@@ -587,7 +763,7 @@
         applyView();
         renderGrid();
         restoreTab();
-    };
+    }
 
     function applyView() {
         var lp = document.getElementById('divListPanel');
@@ -596,10 +772,14 @@
         var view = getView();
         if (view === 'form') {
             lp.style.display = 'none'; fp.style.display = 'block';
+
         } else {
             lp.style.display = 'block'; fp.style.display = 'none';
+
         }
     }
+
+
 
     // ---- TABS ----
     function switchTab(tabId) {
@@ -734,5 +914,104 @@ function openVendor(code) {
     document.getElementById('<%= hfView.ClientID %>').value = 'form';
     __doPostBack('<%= btnBackToList.UniqueID %>', 'open:' + code);
     }
+
+    // ---- VENDOR SEARCH POPUP ----
+    var _vmPopupRows = [];
+
+    function openVMSearch() {
+        try {
+            var raw = document.getElementById('<%= hfGridData.ClientID %>').value;
+            _vmPopupRows = JSON.parse(raw) || [];
+        } catch (e) { _vmPopupRows = []; }
+
+        document.getElementById('vmPopupSearch').value = '';
+        vmPopupRender(_vmPopupRows);
+        var overlay = document.getElementById('vmSearchOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(function () { document.getElementById('vmPopupSearch').focus(); }, 80);
+    }
+
+    function closeVMSearch() {
+        document.getElementById('vmSearchOverlay').style.display = 'none';
+    }
+
+    function vmPopupFilter(val) {
+        var q = val.toLowerCase();
+        var filtered = !q ? _vmPopupRows : _vmPopupRows.filter(function (r) {
+            return (r.Code + ' ' + r.Name + ' ' + r.Phone + ' ' +
+                r.VendorType + ' ' + r.Status + ' ' + r.Address + ' ' + r.VATRegNo)
+                .toLowerCase().indexOf(q) !== -1;
+        });
+        vmPopupRender(filtered);
+    }
+
+    function vmPopupRender(rows) {
+        var tbody = document.getElementById('vmPopupBody');
+        var html = '';
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            var statusStyle = (r.Status && r.Status.toLowerCase() === 'active')
+                ? 'background:#e8f5e9;color:#2e7d32;'
+                : 'background:#fce4ec;color:#c62828;';
+            html += '<tr style="cursor:pointer;" '
+                + 'onmouseover="this.style.background=\'#e3f2fd\'" '
+                + 'onmouseout="this.style.background=\'\'" '
+                + 'onclick="vmPopupSelect(' + r.Code + ')">'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;">' + escHtml(r.Code) + '</td>'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">' + escHtml(r.Name) + '</td>'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;">' + escHtml(r.Phone) + '</td>'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">' + escHtml(r.VendorType) + '</td>'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">'
+                + '<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;' + statusStyle + '">'
+                + escHtml(r.Status) + '</span></td>'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">' + escHtml(r.Address) + '</td>'
+                + '<td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;">' + escHtml(r.VATRegNo) + '</td>'
+                + '</tr>';
+        }
+        if (!html) html = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">No vendors found.</td></tr>';
+        tbody.innerHTML = html;
+        document.getElementById('vmPopupCount').textContent = rows.length + ' vendor(s)';
+    }
+
+    function vmPopupSelect(code) {
+        // 1. Store the selected vendor code in the hidden field the server already uses
+        document.getElementById('<%= hfVendorCode.ClientID %>').value = code;
+    closeVMSearch();
+
+    // 2. Flash the code input for visual feedback
+    var inp = document.getElementById('<%= txtCode.ClientID %>');
+    if (inp) {
+        inp.value = code;
+        inp.style.background = '#e8f5e9';
+        setTimeout(function () { inp.style.background = ''; }, 600);
+    }
+
+    // 3. Click the dedicated hidden postback button — no __doPostBack complexity
+    var btn = document.getElementById('<%= btnPopupSelect.ClientID %>');
+    if (btn) btn.click();
+}
+
+// Intercept the Search button to open popup instead of posting back
+window.addEventListener('load', function () {
+    var btn = document.getElementById('<%= btnSearchCode.ClientID %>');
+    if (!btn) return;
+    btn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openVMSearch();
+        return false;
+    };
+});
+
+    // Close on overlay background click
+    document.addEventListener('click', function (e) {
+        if (e.target === document.getElementById('vmSearchOverlay')) closeVMSearch();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeVMSearch();
+    });
+
 </script>
 </asp:Content>

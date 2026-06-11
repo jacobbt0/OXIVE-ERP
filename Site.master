@@ -92,33 +92,42 @@
                     </div>
                 </div>
 
-                <!-- PRODUCTION -->
-                <div class="menu-section">
-                    <div class="menu-section-header" onclick="toggleSection(this)">
-                        <span><span class="icon">&#9881;</span> PRODUCTION</span>
-                        <span class="arrow">&#9660;</span>
-                    </div>
-                    <div class="menu-section-body">
-                        <ul class="menu-items">
-                            <li><a href="#" class="menu-link">Batching</a></li>
-                            <li><a href="#" class="menu-link">Ready Mix</a></li>
-                        </ul>
-                    </div>
-                </div>
 
-                <!-- ACCOUNTS -->
-                <div class="menu-section">
-                    <div class="menu-section-header" onclick="toggleSection(this)">
-                        <span><span class="icon">&#128200;</span> ACCOUNTS</span>
-                        <span class="arrow">&#9660;</span>
-                    </div>
-                    <div class="menu-section-body">
-                        <ul class="menu-items">
-                            <li><a href="#" class="menu-link">Ledger</a></li>
-                            <li><a href="#" class="menu-link">Voucher Entry</a></li>
-                        </ul>
-                    </div>
-                </div>
+                  <!-- HR & PAYROLL -->
+                  <div class="menu-section">
+                      <div class="menu-section-header" onclick="toggleSection(this)">
+                          <span><span class="icon">&#128230;</span>HR & PAYROLL</span>
+                          <span class="arrow">&#9660;</span>
+                      </div>
+                      <div class="menu-section-body">
+
+                          <!-- Masters Group -->
+                          <div class="menu-group-header" onclick="toggleGroup(this)">
+                              <span>&#9660; Masters</span>
+                              <span class="arrow">&#9660;</span>
+                          </div>
+                          <div class="menu-section-body">
+                              <ul class="menu-items">
+                                  
+                                  <li><a href="TermsConditionMasterRM.aspx" class="menu-link">Employee Master</a></li>
+                              </ul>
+                          </div>
+
+                          <!-- Tasks Group -->
+                          <div class="menu-group-header" onclick="toggleGroup(this)">
+                              <span>&#9658; Tasks</span>
+                              <span class="arrow">&#9660;</span>
+                          </div>
+                          <div class="menu-section-body">
+                              <ul class="menu-items">
+                                  <li><a href="#" class="menu-link">Purchase Orders</a></li>
+                              
+                              </ul>
+                          </div>
+
+                      </div>
+                  </div>
+               
 
             </div>
             <!-- ===== END SIDEBAR ===== -->
