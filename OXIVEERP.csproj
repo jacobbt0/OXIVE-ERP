@@ -79,6 +79,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Masters\EmployeeMaster.aspx" />
     <Content Include="Masters\EmployeeMasterUpload.aspx" />
+    <Content Include="Masters\EmployeeSalaryDetails.aspx" />
     <Content Include="Masters\SourceMaster.aspx" />
     <Content Include="Masters\VendorMaster.aspx" />
     <Content Include="Masters\WeightBridgePartyMaster.aspx" />
@@ -102,6 +103,13 @@
     </Compile>
     <Compile Include="Masters\EmployeeMasterUpload.aspx.designer.cs">
       <DependentUpon>EmployeeMasterUpload.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Masters\EmployeeSalaryDetails.aspx.cs">
+      <DependentUpon>EmployeeSalaryDetails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Masters\EmployeeSalaryDetails.aspx.designer.cs">
+      <DependentUpon>EmployeeSalaryDetails.aspx</DependentUpon>
     </Compile>
     <Compile Include="Masters\SourceMaster.aspx.cs">
       <DependentUpon>SourceMaster.aspx</DependentUpon>

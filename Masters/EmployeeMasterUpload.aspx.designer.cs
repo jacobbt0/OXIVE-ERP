@@ -7,13 +7,11 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace OXIVEERP.Masters
-{
-
-
-    public partial class EmployeeMasterUpload
-    {
-
+namespace OXIVEERP.Masters {
+    
+    
+    public partial class EmployeeMasterUpload {
+        
         /// <summary>
         /// form1 control.
         /// </summary>

@@ -51,84 +51,85 @@
                     </div>
                 </div>
 
-                <!-- RAW MATERIAL -->
-                <div class="menu-section">
-                    <div class="menu-section-header open" onclick="toggleSection(this)">
-                        <span><span class="icon">&#128230;</span> RAW MATERIAL</span>
-                        <span class="arrow">&#9660;</span>
-                    </div>
-                    <div class="menu-section-body open">
+                 <!-- RAW MATERIAL -->
+     <div class="menu-section">
+         <div class="menu-section-header open" onclick="toggleSection(this)">
+             <span><span class="icon">&#128230;</span> RAW MATERIAL</span>
+             <span class="arrow">&#9660;</span>
+         </div>
+         <div class="menu-section-body open">
 
-                        <!-- Masters Group -->
-                        <div class="menu-group-header open" onclick="toggleGroup(this)">
-                            <span>&#9660; Masters</span>
-                            <span class="arrow">&#9660;</span>
-                        </div>
-                        <div class="menu-section-body open">
-                            <ul class="menu-items">
-                                <li><a href="UOMMaster.aspx"                 class="menu-link">UOM Master</a></li>
-                                <li><a href="GroupMaster.aspx"               class="menu-link">Group Master</a></li>
-                                <li><a href="SubGroupMaster.aspx"            class="menu-link">Sub Group</a></li>
-                                <li><a href="SourceMaster.aspx"              class="menu-link">Source Master</a></li>
-                                <li><a href="VendorMaster.aspx"              class="menu-link">Vendor Master</a></li>
-                                <li><a href="RawMaterialMaster.aspx"         class="menu-link">Raw Material Master</a></li>
-                                <li><a href="UOMConversionMaster.aspx"       class="menu-link">UOM Conversion Master</a></li>
-                                <li><a href="TrailerDriverAllocation.aspx"   class="menu-link">Trailer Driver Allocation</a></li>
-                                <li><a href="VendorRateSheet.aspx"           class="menu-link">Vendor Rate Sheet</a></li>
-                                <li><a href="TransporterRateSheet.aspx"      class="menu-link">Transporter Rate Sheet</a></li>
-                                <li><a href="MaterialTripRateEntry.aspx"     class="menu-link">Material Trip Rate Entry</a></li>
-                                <li><a href="WastageTripRateEntry.aspx"      class="menu-link">Wastage Trip Rate Entry</a></li>
-                                <li><a href="WeightBridgePartyMaster.aspx"         class="menu-link">Weight Bridge Party</a></li>
-                                <li><a href="GPEMaterialPlantMapping.aspx"   class="menu-link">GPE Material Plant Mapping</a></li>
-                                <li><a href="TermsConditionMasterRM.aspx"    class="menu-link">Terms &amp; Condition Master RM</a></li>
-                            </ul>
-                        </div>
+             <!-- Masters Group -->
+             <div class="menu-group-header open" onclick="toggleGroup(this)">
+                 <span>&#9660; Masters</span>
+                 <span class="arrow">&#9660;</span>
+             </div>
+             <div class="menu-section-body open">
+                 <ul class="menu-items">
+                     <li><a href="UOMMaster.aspx" class="menu-link">UOM Master</a></li>
+                     <li><a href="GroupMaster.aspx" class="menu-link">Group Master</a></li>
+                     <li><a href="SubGroupMaster.aspx" class="menu-link">Sub Group</a></li>
+                     <li><a href="SourceMaster.aspx" class="menu-link">Source Master</a></li>
+                     <li><a href="WeightBridgePartyMaster.aspx" class="menu-link">WeightBridgePartyMaster</a></li>
+                     <li><a href="GPEMaterialPlantMapping.aspx" class="menu-link">GPE Material Plant Mapping</a></li>
+                     <li><a href="TermsConditionMasterRM.aspx" class="menu-link">Terms &amp; Condition Master RM</a></li>
+                 </ul>
+             </div>
 
-                        <!-- Tasks Group -->
-                        <div class="menu-group-header" onclick="toggleGroup(this)">
-                            <span>&#9658; Tasks</span>
-                            <span class="arrow">&#9660;</span>
-                        </div>
-                        <div class="menu-section-body">
-                            <ul class="menu-items">
-                                <li><a href="#" class="menu-link">Purchase Orders</a></li>
-                                <li><a href="#" class="menu-link">GRN Entry</a></li>
-                                <li><a href="#" class="menu-link">Material Issue</a></li>
-                            </ul>
-                        </div>
+             <!-- Tasks Group -->
+             <div class="menu-group-header" onclick="toggleGroup(this)">
+                 <span>&#9658; Tasks</span>
+                 <span class="arrow">&#9660;</span>
+             </div>
+             <div class="menu-section-body">
+                 <ul class="menu-items">
+                     <li><a href="#" class="menu-link">Purchase Orders</a></li>
+                     <li><a href="#" class="menu-link">GRN Entry</a></li>
+                     <li><a href="#" class="menu-link">Material Issue</a></li>
+                 </ul>
+             </div>
 
-                    </div>
-                </div>
+         </div>
+     </div>
 
-                <!-- PRODUCTION -->
-                <div class="menu-section">
-                    <div class="menu-section-header" onclick="toggleSection(this)">
-                        <span><span class="icon">&#9881;</span> PRODUCTION</span>
-                        <span class="arrow">&#9660;</span>
-                    </div>
-                    <div class="menu-section-body">
-                        <ul class="menu-items">
-                            <li><a href="#" class="menu-link">Batching</a></li>
-                            <li><a href="#" class="menu-link">Ready Mix</a></li>
-                        </ul>
-                    </div>
-                </div>
 
-                <!-- ACCOUNTS -->
-                <div class="menu-section">
-                    <div class="menu-section-header" onclick="toggleSection(this)">
-                        <span><span class="icon">&#128200;</span> ACCOUNTS</span>
-                        <span class="arrow">&#9660;</span>
-                    </div>
-                    <div class="menu-section-body">
-                        <ul class="menu-items">
-                            <li><a href="#" class="menu-link">Ledger</a></li>
-                            <li><a href="#" class="menu-link">Voucher Entry</a></li>
-                        </ul>
-                    </div>
-                </div>
+       <!-- HR & PAYROLL -->
+       <div class="menu-section">
+           <div class="menu-section-header" onclick="toggleSection(this)">
+               <span><span class="icon">&#128230;</span>HR & PAYROLL</span>
+               <span class="arrow">&#9660;</span>
+           </div>
+           <div class="menu-section-body">
 
-            </div>
+               <!-- Masters Group -->
+               <div class="menu-group-header" onclick="toggleGroup(this)">
+                   <span>&#9660; Masters</span>
+                   <span class="arrow">&#9660;</span>
+               </div>
+               <div class="menu-section-body">
+                   <ul class="menu-items">
+                       
+                       <li><a href="EmployeeMasterUpload.aspx" class="menu-link">Employee Master Upload</a></li>
+                   </ul>
+               </div>
+
+               <!-- Tasks Group -->
+               <div class="menu-group-header" onclick="toggleGroup(this)">
+                   <span>&#9658; Tasks</span>
+                   <span class="arrow">&#9660;</span>
+               </div>
+               <div class="menu-section-body">
+                   <ul class="menu-items">
+                       <li><a href="#" class="menu-link">Purchase Orders</a></li>
+                   
+                   </ul>
+               </div>
+
+           </div>
+       </div>
+    
+
+ </div>
             <!-- ===== END SIDEBAR ===== -->
 
             <!-- ===== MAIN CONTENT ===== -->

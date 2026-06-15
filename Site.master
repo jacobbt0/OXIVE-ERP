@@ -109,7 +109,7 @@
                           <div class="menu-section-body">
                               <ul class="menu-items">
                                   
-                                  <li><a href="TermsConditionMasterRM.aspx" class="menu-link">Employee Master</a></li>
+                                  <li><a href="Masters/EmployeeMasterUpload.aspx" class="menu-link">Employee Master Upload</a></li>
                               </ul>
                           </div>
 
