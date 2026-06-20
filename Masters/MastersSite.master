@@ -70,6 +70,7 @@
                      <li><a href="GroupMaster.aspx" class="menu-link">Group Master</a></li>
                      <li><a href="SubGroupMaster.aspx" class="menu-link">Sub Group</a></li>
                      <li><a href="SourceMaster.aspx" class="menu-link">Source Master</a></li>
+                      <li><a href="VendorMaster.aspx" class="menu-link">Vendor Master</a></li>
                      <li><a href="WeightBridgePartyMaster.aspx" class="menu-link">WeightBridgePartyMaster</a></li>
                      <li><a href="GPEMaterialPlantMapping.aspx" class="menu-link">GPE Material Plant Mapping</a></li>
                      <li><a href="TermsConditionMasterRM.aspx" class="menu-link">Terms &amp; Condition Master RM</a></li>
@@ -110,6 +111,7 @@
                    <ul class="menu-items">
                        
                        <li><a href="EmployeeMasterUpload.aspx" class="menu-link">Employee Master Upload</a></li>
+                       <li><a href="EmployeeProfile.aspx" class="menu-link"> EmployeeProfile</a></li>
                    </ul>
                </div>
 

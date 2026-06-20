@@ -11,7 +11,7 @@ namespace OXIVEERP.Masters
 {
 
 
-    public partial class EmployeeSalaryDetails
+    public partial class EmployeeProfile
     {
 
         /// <summary>

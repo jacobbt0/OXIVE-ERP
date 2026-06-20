@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.IO;
+using System.Text;
 using System.Web.UI.WebControls;
 
 public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
@@ -25,17 +26,11 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
         }
     }
 
-    protected void btnDownloadTemplate_Click(object sender, EventArgs e)
-    {
-        string csv = "S.N.,Status,VISA,Employee Name,AR NO,Nationality,Passport No,Passport Expiry,Passport With Company,Join Date,Visa Under Company,Visit Visa Expiry,ID Number,ID Expiry,Designation,BASIC,FOOD ALLOWANCE,HOUSE ALLOWANCE,VISA ALLOWANCE,MOBILE ALLOWANCE,TRANSPORT ALLOWANCE,Other ALLOWANCE,TOTAL\n" +
-                     "1,Active,DONE,John Doe,EMP001,USA,AB123456,2028-12-31,Yes,2025-01-01,Company A,2025-12-31,ID123,2026-12-31,Manager,5000,500,500,500,500,500,500,8000";
-        Response.Clear();
-        Response.ContentType = "text/csv";
-        Response.AddHeader("Content-Disposition", "attachment; filename=EmployeeMasterTemplate.csv");
-        Response.Write(csv);
-        Response.End();
-    }
+   
 
+    // =============================================
+    // UPLOAD & PREVIEW
+    // =============================================
     protected void btnUpload_Click(object sender, EventArgs e)
     {
         if (!fuExcel.HasFile)
@@ -164,6 +159,9 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
         }
     }
 
+    // =============================================
+    // HELPERS (Excel reading)
+    // =============================================
     private string GetString(DataRow row, int colIndex)
     {
         object val = row[colIndex];
@@ -204,6 +202,9 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
         }
     }
 
+    // =============================================
+    // SAVE TO  TABLE Employee_Salary
+    // =============================================
     protected void btnSave_Click(object sender, EventArgs e)
     {
         if (ViewState["PreviewData"] == null)
@@ -215,11 +216,12 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
         DataTable data = (DataTable)ViewState["PreviewData"];
         int inserted = 0;
         int skipped = 0;
-        System.Text.StringBuilder duplicateList = new System.Text.StringBuilder();
+        StringBuilder duplicateList = new StringBuilder();
 
         using (SqlConnection con = new SqlConnection(ConStr))
         {
             con.Open();
+
             foreach (DataRow row in data.Rows)
             {
                 string arNo = row["ARNo"] != DBNull.Value ? row["ARNo"].ToString().Trim() : "";
@@ -230,8 +232,8 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
                     continue;
                 }
 
-                // Check if ARNo already exists
-                string checkSql = "SELECT COUNT(*) FROM Employee_Info WHERE ARNo = @arNo";
+                // Check if ARNo already exists in Employee_Master
+                string checkSql = "SELECT COUNT(*) FROM Employee_Master WHERE ARNo = @arNo";
                 using (SqlCommand checkCmd = new SqlCommand(checkSql, con))
                 {
                     checkCmd.Parameters.AddWithValue("@arNo", arNo);
@@ -244,61 +246,74 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
                     }
                 }
 
-                // Insert new record
-                try
-                {
-                    string insertSql = @"
-                    INSERT INTO Employee_Info
-                    (SerialNo, Status, VisaStatus, EmployeeName, ARNo, Nationality,
-                     PassportNo, PassportExpiry, PassportWithCompany, JoinDate, VisaUnderCompany,
-                     VisitVisaExpiry, IDNumber, IDExpiryDate, Designation,
-                     BasicSalary, FoodAllowance, HouseAllowance, VisaAllowance,
-                     MobileAllowance, TransportAllowance, OtherAllowance, TotalSalary,
-                     CreatedBy)
+                // ---- Get or insert master IDs ----
+                object nationalityID = GetOrInsertNationality(con, row["Nationality"].ToString());
+                object designationID = GetOrInsertDesignation(con, row["Designation"].ToString());
+                object statusID = GetOrInsertStatus(con, row["Status"].ToString());
+                object visaStatusID = GetOrInsertVisaStatus(con, row["VisaStatus"].ToString());
+                object companyID = GetOrInsertCompany(con, row["VisaUnderCompany"].ToString());
+
+                // ---- 1. Insert Employee_Master ----
+                string insertMaster = @"
+                    INSERT INTO Employee_Master
+                    (ARNo, EmployeeName, NationalityID, DesignationID, JoinDate, StatusID, CreatedBy)
                     VALUES
-                    (@SerialNo, @Status, @VisaStatus, @EmployeeName, @ARNo, @Nationality,
-                     @PassportNo, @PassportExpiry, @PassportWithCompany, @JoinDate, @VisaUnderCompany,
-                     @VisitVisaExpiry, @IDNumber, @IDExpiryDate, @Designation,
-                     @BasicSalary, @FoodAllowance, @HouseAllowance, @VisaAllowance,
-                     @MobileAllowance, @TransportAllowance, @OtherAllowance, @TotalSalary,
-                     @CreatedBy)";
-
-                    using (SqlCommand cmd = new SqlCommand(insertSql, con))
-                    {
-                        cmd.Parameters.AddWithValue("@SerialNo", row["SerialNo"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Status", row["Status"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@VisaStatus", row["VisaStatus"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@EmployeeName", row["EmployeeName"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@ARNo", arNo);
-                        cmd.Parameters.AddWithValue("@Nationality", row["Nationality"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@PassportNo", row["PassportNo"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@PassportExpiry", row["PassportExpiry"] == DBNull.Value ? DBNull.Value : row["PassportExpiry"]);
-                        cmd.Parameters.AddWithValue("@PassportWithCompany", row["PassportWithCompany"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@JoinDate", row["JoinDate"] == DBNull.Value ? DBNull.Value : row["JoinDate"]);
-                        cmd.Parameters.AddWithValue("@VisaUnderCompany", row["VisaUnderCompany"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@VisitVisaExpiry", row["VisitVisaExpiry"] == DBNull.Value ? DBNull.Value : row["VisitVisaExpiry"]);
-                        cmd.Parameters.AddWithValue("@IDNumber", row["IDNumber"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@IDExpiryDate", row["IDExpiryDate"] == DBNull.Value ? DBNull.Value : row["IDExpiryDate"]);
-                        cmd.Parameters.AddWithValue("@Designation", row["Designation"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@BasicSalary", row["BasicSalary"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@FoodAllowance", row["FoodAllowance"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@HouseAllowance", row["HouseAllowance"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@VisaAllowance", row["VisaAllowance"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@MobileAllowance", row["MobileAllowance"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@TransportAllowance", row["TransportAllowance"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@OtherAllowance", row["OtherAllowance"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@TotalSalary", row["TotalSalary"] ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@CreatedBy", Page.User.Identity.Name ?? "Admin");
-
-                        cmd.ExecuteNonQuery();
-                        inserted++;
-                    }
-                }
-                catch (Exception ex)
+                    (@arNo, @name, @nat, @des, @join, @status, @user)";
+                using (SqlCommand cmd = new SqlCommand(insertMaster, con))
                 {
-                    skipped++;
-                    duplicateList.AppendLine(" - " + arNo + " (Error: " + ex.Message + ")");
+                    cmd.Parameters.AddWithValue("@arNo", arNo);
+                    cmd.Parameters.AddWithValue("@name", row["EmployeeName"] ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@nat", nationalityID);
+                    cmd.Parameters.AddWithValue("@des", designationID);
+                    cmd.Parameters.AddWithValue("@join", row["JoinDate"] == DBNull.Value ? DBNull.Value : row["JoinDate"]);
+                    cmd.Parameters.AddWithValue("@status", statusID);
+                    cmd.Parameters.AddWithValue("@user", Page.User.Identity.Name ?? "Admin");
+                    cmd.ExecuteNonQuery();
                 }
+
+                // ---- 2. Insert Employee_Visa_Info ----
+                string insertVisa = @"
+                    INSERT INTO Employee_Visa_Info
+                    (ARNo, VisaStatusID, PassportNo, PassportExpiry, PassportWithCompany,
+                     VisitVisaExpiry, IDNumber, IDExpiryDate, VisaUnderCompanyID)
+                    VALUES
+                    (@arNo, @visaStatus, @passport, @passExp, @passWithCo,
+                     @visitExp, @idNo, @idExp, @company)";
+                using (SqlCommand cmd = new SqlCommand(insertVisa, con))
+                {
+                    cmd.Parameters.AddWithValue("@arNo", arNo);
+                    cmd.Parameters.AddWithValue("@visaStatus", visaStatusID);
+                    cmd.Parameters.AddWithValue("@passport", row["PassportNo"] ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@passExp", row["PassportExpiry"] == DBNull.Value ? DBNull.Value : row["PassportExpiry"]);
+                    bool passportWithCompany = row["PassportWithCompany"] != DBNull.Value && row["PassportWithCompany"].ToString().ToUpper() == "YES";
+                    cmd.Parameters.AddWithValue("@passWithCo", passportWithCompany);
+                    cmd.Parameters.AddWithValue("@visitExp", row["VisitVisaExpiry"] == DBNull.Value ? DBNull.Value : row["VisitVisaExpiry"]);
+                    cmd.Parameters.AddWithValue("@idNo", row["IDNumber"] ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@idExp", row["IDExpiryDate"] == DBNull.Value ? DBNull.Value : row["IDExpiryDate"]);
+                    cmd.Parameters.AddWithValue("@company", companyID);
+                    cmd.ExecuteNonQuery();
+                }
+
+                //  Insert Salary Components 
+                // Get Component IDs for each allowance type
+                int basicCompId = GetComponentID(con, "Basic Salary");
+                int foodCompId = GetComponentID(con, "Food Allowance");
+                int houseCompId = GetComponentID(con, "House Allowance");
+                int visaCompId = GetComponentID(con, "Visa Allowance");
+                int mobileCompId = GetComponentID(con, "Mobile Allowance");
+                int transportCompId = GetComponentID(con, "Transport Allowance");
+                int otherCompId = GetComponentID(con, "Other Allowance");
+
+                // Insert only if amount > 0 
+                InsertSalaryComponent(con, arNo, basicCompId, row["BasicSalary"]);
+                InsertSalaryComponent(con, arNo, foodCompId, row["FoodAllowance"]);
+                InsertSalaryComponent(con, arNo, houseCompId, row["HouseAllowance"]);
+                InsertSalaryComponent(con, arNo, visaCompId, row["VisaAllowance"]);
+                InsertSalaryComponent(con, arNo, mobileCompId, row["MobileAllowance"]);
+                InsertSalaryComponent(con, arNo, transportCompId, row["TransportAllowance"]);
+                InsertSalaryComponent(con, arNo, otherCompId, row["OtherAllowance"]);
+
+                inserted++;
             }
         }
 
@@ -329,6 +344,150 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
         }
     }
 
+    // Helper to insert a salary component row
+    private void InsertSalaryComponent(SqlConnection con, string arNo, int componentId, object amountObj)
+    {
+        if (componentId == 0) return; // component not found
+        decimal amount = 0;
+        if (amountObj != DBNull.Value)
+            decimal.TryParse(amountObj.ToString(), out amount);
+        if (amount == 0) return; // skip zero amounts
+
+        string sql = @"
+            INSERT INTO Employee_Salary_Components (ARNo, ComponentID, Amount)
+            VALUES (@arNo, @compId, @amount)";
+        using (SqlCommand cmd = new SqlCommand(sql, con))
+        {
+            cmd.Parameters.AddWithValue("@arNo", arNo);
+            cmd.Parameters.AddWithValue("@compId", componentId);
+            cmd.Parameters.AddWithValue("@amount", amount);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    // Helper to get component ID by name
+    private int GetComponentID(SqlConnection con, string componentName)
+    {
+        string sql = "SELECT ComponentID FROM Salary_Component_Master WHERE ComponentName = @name";
+        using (SqlCommand cmd = new SqlCommand(sql, con))
+        {
+            cmd.Parameters.AddWithValue("@name", componentName);
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+                return Convert.ToInt32(result);
+            else
+                return 0;
+        }
+    }
+
+    // =============================================
+    // MASTER TABLE HELPERS
+    // =============================================
+    private object GetOrInsertNationality(SqlConnection con, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return DBNull.Value;
+
+        string select = "SELECT NationalityID FROM Nationality_Master WHERE NationalityName = @name";
+        using (SqlCommand cmd = new SqlCommand(select, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+                return result;
+        }
+
+        string insert = "INSERT INTO Nationality_Master (NationalityName) VALUES (@name); SELECT SCOPE_IDENTITY()";
+        using (SqlCommand cmd = new SqlCommand(insert, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            return cmd.ExecuteScalar();
+        }
+    }
+
+    private object GetOrInsertDesignation(SqlConnection con, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return DBNull.Value;
+        string select = "SELECT DesignationID FROM Designation_Master WHERE DesignationName = @name";
+        using (SqlCommand cmd = new SqlCommand(select, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+                return result;
+        }
+        string insert = "INSERT INTO Designation_Master (DesignationName) VALUES (@name); SELECT SCOPE_IDENTITY()";
+        using (SqlCommand cmd = new SqlCommand(insert, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            return cmd.ExecuteScalar();
+        }
+    }
+
+    private object GetOrInsertStatus(SqlConnection con, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return DBNull.Value;
+        string select = "SELECT StatusID FROM EmployeeStatus_Master WHERE StatusName = @name";
+        using (SqlCommand cmd = new SqlCommand(select, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+                return result;
+        }
+        string insert = "INSERT INTO EmployeeStatus_Master (StatusName) VALUES (@name); SELECT SCOPE_IDENTITY()";
+        using (SqlCommand cmd = new SqlCommand(insert, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            return cmd.ExecuteScalar();
+        }
+    }
+
+    private object GetOrInsertVisaStatus(SqlConnection con, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return DBNull.Value;
+        string select = "SELECT VisaStatusID FROM VisaStatus_Master WHERE VisaStatusName = @name";
+        using (SqlCommand cmd = new SqlCommand(select, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+                return result;
+        }
+        string insert = "INSERT INTO VisaStatus_Master (VisaStatusName) VALUES (@name); SELECT SCOPE_IDENTITY()";
+        using (SqlCommand cmd = new SqlCommand(insert, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            return cmd.ExecuteScalar();
+        }
+    }
+
+    private object GetOrInsertCompany(SqlConnection con, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return DBNull.Value;
+        string select = "SELECT CompanyID FROM Company_Master WHERE CompanyName = @name";
+        using (SqlCommand cmd = new SqlCommand(select, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+                return result;
+        }
+        string insert = "INSERT INTO Company_Master (CompanyName) VALUES (@name); SELECT SCOPE_IDENTITY()";
+        using (SqlCommand cmd = new SqlCommand(insert, con))
+        {
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            return cmd.ExecuteScalar();
+        }
+    }
+
+    // =============================================
+    // CLEAR
+    // =============================================
     protected void btnClear_Click(object sender, EventArgs e)
     {
         ViewState["PreviewData"] = null;
@@ -339,6 +498,9 @@ public partial class Masters_EmployeeMasterUpload : System.Web.UI.Page
         ShowMessage("Form cleared.", false);
     }
 
+    // =============================================
+    // MESSAGE HELPER
+    // =============================================
     private void ShowMessage(string msg, bool isError)
     {
         lblMessage.ForeColor = isError ? System.Drawing.Color.Red : System.Drawing.Color.Green;

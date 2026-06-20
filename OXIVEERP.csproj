@@ -77,9 +77,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\Site.css" />
-    <Content Include="Masters\EmployeeMaster.aspx" />
     <Content Include="Masters\EmployeeMasterUpload.aspx" />
-    <Content Include="Masters\EmployeeSalaryDetails.aspx" />
+    <Content Include="Masters\EmployeeProfile.aspx" />
     <Content Include="Masters\SourceMaster.aspx" />
     <Content Include="Masters\VendorMaster.aspx" />
     <Content Include="Masters\WeightBridgePartyMaster.aspx" />
@@ -90,13 +89,6 @@
       <DependentUpon>Default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="Masters\EmployeeMaster.aspx.cs">
-      <DependentUpon>EmployeeMaster.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Masters\EmployeeMaster.aspx.designer.cs">
-      <DependentUpon>EmployeeMaster.aspx</DependentUpon>
-    </Compile>
     <Compile Include="Masters\EmployeeMasterUpload.aspx.cs">
       <DependentUpon>EmployeeMasterUpload.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -104,12 +96,12 @@
     <Compile Include="Masters\EmployeeMasterUpload.aspx.designer.cs">
       <DependentUpon>EmployeeMasterUpload.aspx</DependentUpon>
     </Compile>
-    <Compile Include="Masters\EmployeeSalaryDetails.aspx.cs">
-      <DependentUpon>EmployeeSalaryDetails.aspx</DependentUpon>
+    <Compile Include="Masters\EmployeeProfile.aspx.cs">
+      <DependentUpon>EmployeeProfile.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="Masters\EmployeeSalaryDetails.aspx.designer.cs">
-      <DependentUpon>EmployeeSalaryDetails.aspx</DependentUpon>
+    <Compile Include="Masters\EmployeeProfile.aspx.designer.cs">
+      <DependentUpon>EmployeeProfile.aspx</DependentUpon>
     </Compile>
     <Compile Include="Masters\SourceMaster.aspx.cs">
       <DependentUpon>SourceMaster.aspx</DependentUpon>

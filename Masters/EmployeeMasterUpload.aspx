@@ -17,8 +17,6 @@
     <div class="form-card">
 
         <div class="btn-row" style="margin-bottom: 15px;">
-            <asp:Button ID="btnDownloadTemplate" runat="server" Text="📥 Download Template" 
-                CssClass="btn btn-secondary" OnClick="btnDownloadTemplate_Click" />
             <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-secondary"
                 OnClick="btnClear_Click" CausesValidation="false" />
             <asp:Button ID="btnSave" runat="server" Text="💾 Save to Database" CssClass="btn btn-primary"

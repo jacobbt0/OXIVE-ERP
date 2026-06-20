@@ -2111,3 +2111,152 @@ body {
     color: #888;
     font-size: 14px;
 }
+
+
+
+
+#vmToast {
+    display: none;
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    min-width: 260px;
+    max-width: 420px;
+    padding: 13px 18px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-family: inherit;
+    box-shadow: 0 4px 16px rgba(0,0,0,.18);
+    z-index: 99999;
+    line-height: 1.45;
+    word-break: break-word;
+    opacity: 1;
+    transition: opacity .3s;
+}
+
+
+
+
+
+.profile-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+}
+
+.profile-tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #e9ecef;
+    margin-right: 5px;
+    border-radius: 4px 4px 0 0;
+}
+
+    .profile-tab.active {
+        background: #007bff;
+        color: white;
+    }
+
+.tab-pane {
+    display: none;
+}
+
+    .tab-pane.active {
+        display: block;
+    }
+
+.profile-grid {
+    margin-top: 10px;
+    overflow-x: auto;
+}
+
+    .profile-grid table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .profile-grid th, .profile-grid td {
+        border: 1px solid #ddd;
+        padding: 6px;
+        text-align: left;
+        font-size: 13px;
+    }
+
+    .profile-grid th {
+        background: #f2f2f2;
+    }
+
+.profile-form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+    .profile-form-row label {
+        width: 150px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .profile-form-row .field {
+        flex: 1;
+    }
+
+        .profile-form-row .field input, .profile-form-row .field select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+            .profile-form-row .field input[type="checkbox"] {
+                width: auto;
+            }
+
+.action-buttons {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.search-box {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+    .search-box input {
+        padding: 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 300px;
+    }
+
+.list-panel, .detail-panel {
+    padding: 10px;
+}
+
+.panel-hidden {
+    display: none;
+}
+
+.link-btn {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+    .link-btn.delete {
+        color: #dc3545;
+    }
+
+    .link-btn:hover {
+        opacity: 0.7;
+    }

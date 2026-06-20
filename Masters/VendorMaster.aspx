@@ -5,12 +5,7 @@
 <asp:Content ID="NavTitleContent" ContentPlaceHolderID="NavTitle" runat="server">Vendor Master</asp:Content>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadContent" runat="server">
-<style>
-    #vmToast{display:none;position:fixed;bottom:28px;right:28px;min-width:260px;max-width:420px;
-        padding:13px 18px;border-radius:6px;font-size:13.5px;font-family:inherit;
-        box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:99999;line-height:1.45;
-        word-break:break-word;opacity:1;transition:opacity .3s;}
-</style>
+
 <script type="text/javascript">
     var _toastTimer = null;
     function showToast(msg, type) {
